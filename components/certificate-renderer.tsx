@@ -1,5 +1,5 @@
 "use client"
-// certificate-renderer v2
+// certificate-renderer v3 – fixed thumbnail JSX
 
 import type { Participant } from "@/lib/csv-fields"
 import type { EventData, Signatory } from "@/lib/certificate-wording"
