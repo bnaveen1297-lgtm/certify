@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { CertificateTemplate, TemplateElement } from "@/lib/template-editor"
 import {
-  defaultTextElement, defaultHeadingElement, defaultDividerElement,
-  defaultShapeElement, defaultLogoElement, defaultImageElement,
+  defaultTextElement, defaultHeadingElement, defaultDivider,
+  defaultRectangle, defaultEllipse, defaultLogoElement,
 } from "@/lib/template-editor"
 
 interface LayerPanelProps {
@@ -30,11 +30,10 @@ const ADD_ITEMS: { label: string; icon: React.ReactNode; make: () => TemplateEle
   { label: "Heading", icon: <span className="font-black text-[11px]">H</span>, make: () => defaultHeadingElement() },
   { label: "Text", icon: <Type size={13} />, make: () => defaultTextElement({ content: "Click to edit text" }) },
   { label: "Token", icon: <span className="text-[9px] font-bold font-mono">{"{T}"}</span>, make: () => defaultTextElement({ content: "{FullName}", fontSize: 22, fontWeight: "700" }) },
-  { label: "Divider", icon: <Minus size={13} />, make: () => defaultDividerElement() },
-  { label: "Rectangle", icon: <Square size={13} />, make: () => defaultShapeElement({ shape: "rect" }) },
-  { label: "Ellipse", icon: <Circle size={13} />, make: () => defaultShapeElement({ shape: "ellipse" }) },
-  { label: "Logo", icon: <Star size={13} />, make: () => defaultLogoElement() },
-  { label: "Image", icon: <ImageIcon size={13} />, make: () => defaultImageElement() },
+  { label: "Divider", icon: <Minus size={13} />, make: () => defaultDivider() },
+  { label: "Rectangle", icon: <Square size={13} />, make: () => defaultRectangle() },
+  { label: "Ellipse", icon: <Circle size={13} />, make: () => defaultEllipse() },
+  { label: "Logo", icon: <Star size={13} />, make: () => defaultLogoElement("logo_organizer") },
 ]
 
 // Borders & Frames presets
@@ -42,92 +41,92 @@ const BORDER_PRESETS: { label: string; make: () => TemplateElement[] }[] = [
   {
     label: "Simple Border",
     make: () => [
-      defaultShapeElement({ shape: "rect", x: 20, y: 20, width: 754, height: 516, fill: "transparent", stroke: "#1a365d", strokeWidth: 2, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 20, y: 20, width: 754, height: 516, fill: "transparent", stroke: "#1a365d", strokeWidth: 2, borderRadius: 0, locked: false }),
     ],
   },
   {
     label: "Double Border",
     make: () => [
-      defaultShapeElement({ shape: "rect", x: 15, y: 15, width: 764, height: 526, fill: "transparent", stroke: "#1a365d", strokeWidth: 2, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 25, y: 25, width: 744, height: 506, fill: "transparent", stroke: "#1a365d", strokeWidth: 1, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 15, y: 15, width: 764, height: 526, fill: "transparent", stroke: "#1a365d", strokeWidth: 2, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 25, y: 25, width: 744, height: 506, fill: "transparent", stroke: "#1a365d", strokeWidth: 1, borderRadius: 0, locked: false }),
     ],
   },
   {
     label: "Triple Border",
     make: () => [
-      defaultShapeElement({ shape: "rect", x: 10, y: 10, width: 774, height: 536, fill: "transparent", stroke: "#b8860b", strokeWidth: 3, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 20, y: 20, width: 754, height: 516, fill: "transparent", stroke: "#1a365d", strokeWidth: 1, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 30, y: 30, width: 734, height: 496, fill: "transparent", stroke: "#b8860b", strokeWidth: 2, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 10, y: 10, width: 774, height: 536, fill: "transparent", stroke: "#b8860b", strokeWidth: 3, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 20, y: 20, width: 754, height: 516, fill: "transparent", stroke: "#1a365d", strokeWidth: 1, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 30, y: 30, width: 734, height: 496, fill: "transparent", stroke: "#b8860b", strokeWidth: 2, borderRadius: 0, locked: false }),
     ],
   },
   {
     label: "Rounded Border",
     make: () => [
-      defaultShapeElement({ shape: "rect", x: 20, y: 20, width: 754, height: 516, fill: "transparent", stroke: "#1a365d", strokeWidth: 2, borderRadius: 12, locked: false }),
+      defaultRectangle({ x: 20, y: 20, width: 754, height: 516, fill: "transparent", stroke: "#1a365d", strokeWidth: 2, borderRadius: 12, locked: false }),
     ],
   },
   {
     label: "Gold Frame",
     make: () => [
-      defaultShapeElement({ shape: "rect", x: 10, y: 10, width: 774, height: 536, fill: "transparent", stroke: "#b8860b", strokeWidth: 4, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 18, y: 18, width: 758, height: 520, fill: "transparent", stroke: "#d4af37", strokeWidth: 1, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 10, y: 10, width: 774, height: 536, fill: "transparent", stroke: "#b8860b", strokeWidth: 4, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 18, y: 18, width: 758, height: 520, fill: "transparent", stroke: "#d4af37", strokeWidth: 1, borderRadius: 0, locked: false }),
     ],
   },
   {
     label: "Corner Accents",
     make: () => [
-      defaultShapeElement({ shape: "rect", x: 20, y: 20, width: 754, height: 516, fill: "transparent", stroke: "#1a365d", strokeWidth: 1, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 15, y: 15, width: 40, height: 40, fill: "transparent", stroke: "#b8860b", strokeWidth: 2, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 739, y: 15, width: 40, height: 40, fill: "transparent", stroke: "#b8860b", strokeWidth: 2, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 15, y: 501, width: 40, height: 40, fill: "transparent", stroke: "#b8860b", strokeWidth: 2, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 739, y: 501, width: 40, height: 40, fill: "transparent", stroke: "#b8860b", strokeWidth: 2, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 20, y: 20, width: 754, height: 516, fill: "transparent", stroke: "#1a365d", strokeWidth: 1, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 15, y: 15, width: 40, height: 40, fill: "transparent", stroke: "#b8860b", strokeWidth: 2, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 739, y: 15, width: 40, height: 40, fill: "transparent", stroke: "#b8860b", strokeWidth: 2, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 15, y: 501, width: 40, height: 40, fill: "transparent", stroke: "#b8860b", strokeWidth: 2, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 739, y: 501, width: 40, height: 40, fill: "transparent", stroke: "#b8860b", strokeWidth: 2, borderRadius: 0, locked: false }),
     ],
   },
   {
     label: "Elegant Double",
     make: () => [
-      defaultShapeElement({ shape: "rect", x: 12, y: 12, width: 770, height: 532, fill: "transparent", stroke: "#2c5282", strokeWidth: 3, borderRadius: 4, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 24, y: 24, width: 746, height: 508, fill: "transparent", stroke: "#b8860b", strokeWidth: 1, borderRadius: 2, locked: false }),
+      defaultRectangle({ x: 12, y: 12, width: 770, height: 532, fill: "transparent", stroke: "#2c5282", strokeWidth: 3, borderRadius: 4, locked: false }),
+      defaultRectangle({ x: 24, y: 24, width: 746, height: 508, fill: "transparent", stroke: "#b8860b", strokeWidth: 1, borderRadius: 2, locked: false }),
     ],
   },
   {
     label: "Classic Certificate",
     make: () => [
-      defaultShapeElement({ shape: "rect", x: 8, y: 8, width: 778, height: 540, fill: "transparent", stroke: "#1a365d", strokeWidth: 4, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 16, y: 16, width: 762, height: 524, fill: "transparent", stroke: "#b8860b", strokeWidth: 2, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 28, y: 28, width: 738, height: 500, fill: "transparent", stroke: "#1a365d", strokeWidth: 1, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 8, y: 8, width: 778, height: 540, fill: "transparent", stroke: "#1a365d", strokeWidth: 4, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 16, y: 16, width: 762, height: 524, fill: "transparent", stroke: "#b8860b", strokeWidth: 2, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 28, y: 28, width: 738, height: 500, fill: "transparent", stroke: "#1a365d", strokeWidth: 1, borderRadius: 0, locked: false }),
     ],
   },
   {
     label: "Modern Minimal",
     make: () => [
-      defaultDividerElement({ x: 40, y: 30, width: 714, stroke: "#333", strokeWidth: 2 }),
-      defaultDividerElement({ x: 40, y: 526, width: 714, stroke: "#333", strokeWidth: 2 }),
+      defaultDivider({ x: 40, y: 30, width: 714, stroke: "#333", strokeWidth: 2 }),
+      defaultDivider({ x: 40, y: 526, width: 714, stroke: "#333", strokeWidth: 2 }),
     ],
   },
   {
     label: "Side Accents",
     make: () => [
-      defaultShapeElement({ shape: "rect", x: 15, y: 50, width: 6, height: 456, fill: "#b8860b", stroke: "transparent", strokeWidth: 0, borderRadius: 3, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 773, y: 50, width: 6, height: 456, fill: "#b8860b", stroke: "transparent", strokeWidth: 0, borderRadius: 3, locked: false }),
+      defaultRectangle({ x: 15, y: 50, width: 6, height: 456, fill: "#b8860b", stroke: "transparent", strokeWidth: 0, borderRadius: 3, locked: false }),
+      defaultRectangle({ x: 773, y: 50, width: 6, height: 456, fill: "#b8860b", stroke: "transparent", strokeWidth: 0, borderRadius: 3, locked: false }),
     ],
   },
   {
     label: "Chess Pattern",
     make: () => [
-      defaultShapeElement({ shape: "rect", x: 10, y: 10, width: 774, height: 536, fill: "transparent", stroke: "#1a365d", strokeWidth: 2, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 20, y: 20, width: 20, height: 20, fill: "#1a365d", stroke: "transparent", strokeWidth: 0, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 754, y: 20, width: 20, height: 20, fill: "#1a365d", stroke: "transparent", strokeWidth: 0, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 20, y: 516, width: 20, height: 20, fill: "#1a365d", stroke: "transparent", strokeWidth: 0, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "rect", x: 754, y: 516, width: 20, height: 20, fill: "#1a365d", stroke: "transparent", strokeWidth: 0, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 10, y: 10, width: 774, height: 536, fill: "transparent", stroke: "#1a365d", strokeWidth: 2, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 20, y: 20, width: 20, height: 20, fill: "#1a365d", stroke: "transparent", strokeWidth: 0, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 754, y: 20, width: 20, height: 20, fill: "#1a365d", stroke: "transparent", strokeWidth: 0, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 20, y: 516, width: 20, height: 20, fill: "#1a365d", stroke: "transparent", strokeWidth: 0, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 754, y: 516, width: 20, height: 20, fill: "#1a365d", stroke: "transparent", strokeWidth: 0, borderRadius: 0, locked: false }),
     ],
   },
   {
     label: "Award Style",
     make: () => [
-      defaultShapeElement({ shape: "rect", x: 15, y: 15, width: 764, height: 526, fill: "transparent", stroke: "#b8860b", strokeWidth: 3, borderRadius: 8, locked: false }),
-      defaultShapeElement({ shape: "ellipse", x: 367, y: 5, width: 60, height: 30, fill: "#b8860b", stroke: "transparent", strokeWidth: 0, borderRadius: 0, locked: false }),
-      defaultShapeElement({ shape: "ellipse", x: 367, y: 521, width: 60, height: 30, fill: "#b8860b", stroke: "transparent", strokeWidth: 0, borderRadius: 0, locked: false }),
+      defaultRectangle({ x: 15, y: 15, width: 764, height: 526, fill: "transparent", stroke: "#b8860b", strokeWidth: 3, borderRadius: 8, locked: false }),
+      defaultEllipse({ x: 367, y: 5, width: 60, height: 30, fill: "#b8860b", stroke: "transparent", strokeWidth: 0, locked: false }),
+      defaultEllipse({ x: 367, y: 521, width: 60, height: 30, fill: "#b8860b", stroke: "transparent", strokeWidth: 0, locked: false }),
     ],
   },
 ]
