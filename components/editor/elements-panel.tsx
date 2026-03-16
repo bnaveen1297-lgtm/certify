@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef, useState } from "react"
 import {
   CertificateTemplate, TemplateElement,
   defaultTextElement, defaultHeadingElement, defaultDivider,
@@ -8,7 +9,7 @@ import {
 } from "@/lib/template-editor"
 import {
   Type, Minus, Square, Circle, Image as ImageIcon,
-  Eye, EyeOff, Lock, Unlock, Trash2, Copy, ChevronUp, ChevronDown,
+  Eye, EyeOff, Lock, Unlock, Trash2, Copy, GripVertical,
 } from "lucide-react"
 
 interface ElementsPanelProps {
@@ -24,32 +25,33 @@ interface ElementsPanelProps {
 }
 
 const ADD_ITEMS = [
-  { label: "Heading", icon: <span style={{ fontWeight: 800, fontSize: 12 }}>H</span>, make: () => defaultHeadingElement() },
-  { label: "Body Text", icon: <Type size={13} />, make: () => defaultTextElement({ content: "Click to edit text" }) },
-  { label: "Token Text", icon: <span style={{ fontSize: 9, fontWeight: 700 }}>{"{T}"}</span>, make: () => defaultTextElement({ content: "{FullName}", fontSize: 22, fontWeight: "700" }) },
+  { label: "Heading", icon: <span className="font-black text-[11px]">H</span>, make: () => defaultHeadingElement() },
+  { label: "Text", icon: <Type size={13} />, make: () => defaultTextElement({ content: "Click to edit text" }) },
+  { label: "Token", icon: <span className="text-[9px] font-bold font-mono">{"{T}"}</span>, make: () => defaultTextElement({ content: "{FullName}", fontSize: 22, fontWeight: "700" }) },
   { label: "Divider", icon: <Minus size={13} />, make: () => defaultDivider() },
-  { label: "Rectangle", icon: <Square size={12} />, make: () => defaultRectangle({ x: 60, y: 60, width: 200, height: 120, fill: "transparent" }) },
-  { label: "Ellipse", icon: <Circle size={12} />, make: () => defaultEllipse() },
+  { label: "Rect", icon: <Square size={12} />, make: () => defaultRectangle({ x: 60, y: 60, width: 200, height: 120, fill: "transparent" }) },
+  { label: "Circle", icon: <Circle size={12} />, make: () => defaultEllipse() },
   { label: "Org Logo", icon: <ImageIcon size={12} />, make: () => defaultLogoElement("logo_organizer") },
-  { label: "Sponsor Logo", icon: <ImageIcon size={12} />, make: () => defaultLogoElement("logo_sponsor") },
+  { label: "Sponsor", icon: <ImageIcon size={12} />, make: () => defaultLogoElement("logo_sponsor") },
 ]
 
 function elIcon(type: string) {
   switch (type) {
-    case "heading": return <span style={{ fontWeight: 800, fontSize: 10 }}>H</span>
-    case "text": return <Type size={10} />
-    case "divider": return <Minus size={10} />
-    case "rectangle": return <Square size={10} />
-    case "ellipse": return <Circle size={10} />
-    case "logo_organizer": case "logo_sponsor": return <ImageIcon size={10} />
-    default: return <Square size={10} />
+    case "heading": return <span className="font-black text-[9px] text-white/50">H</span>
+    case "text": return <Type size={10} className="text-white/40" />
+    case "divider": return <Minus size={10} className="text-white/40" />
+    case "rectangle": return <Square size={10} className="text-white/40" />
+    case "ellipse": return <Circle size={10} className="text-white/40" />
+    case "logo_organizer": case "logo_sponsor": return <ImageIcon size={10} className="text-white/40" />
+    default: return <Square size={10} className="text-white/40" />
   }
 }
 
 function elLabel(el: TemplateElement): string {
   if (el.type === "text" || el.type === "heading") {
     const content = (el as any).content as string
-    return content.length > 22 ? content.slice(0, 22) + "…" : content
+    const clean = content.replace(/\{|\}/g, "")
+    return clean.length > 24 ? clean.slice(0, 24) + "…" : clean
   }
   const map: Record<string, string> = {
     divider: "Divider", rectangle: "Rectangle", ellipse: "Ellipse",
@@ -63,55 +65,75 @@ export function ElementsPanel({
   onSelectElement, onAddElement, onRemoveElement, onDuplicateElement,
   onReorderElements, onToggleVisibility, onToggleLock,
 }: ElementsPanelProps) {
+  // Sort highest z on top (rendered first in layers = visually on top)
   const sorted = [...template.elements].sort((a, b) => b.zIndex - a.zIndex)
 
-  const move = (id: string, dir: "up" | "down") => {
-    const els = [...template.elements].sort((a, b) => a.zIndex - b.zIndex)
-    const idx = els.findIndex(e => e.id === id)
-    if (dir === "up" && idx < els.length - 1) {
-      const next = idx + 1
-      const tmp = els[idx].zIndex
-      els[idx] = { ...els[idx], zIndex: els[next].zIndex }
-      els[next] = { ...els[next], zIndex: tmp }
-    } else if (dir === "down" && idx > 0) {
-      const prev = idx - 1
-      const tmp = els[idx].zIndex
-      els[idx] = { ...els[idx], zIndex: els[prev].zIndex }
-      els[prev] = { ...els[prev], zIndex: tmp }
-    }
-    onReorderElements(els)
+  const dragItem = useRef<number | null>(null)
+  const dragOver = useRef<number | null>(null)
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  const [overIdx, setOverIdx] = useState<number | null>(null)
+
+  function handleDragStart(idx: number) {
+    dragItem.current = idx
+    setDragIdx(idx)
+  }
+
+  function handleDragEnter(idx: number) {
+    dragOver.current = idx
+    setOverIdx(idx)
+  }
+
+  function handleDragEnd() {
+    const from = dragItem.current
+    const to = dragOver.current
+    setDragIdx(null)
+    setOverIdx(null)
+    dragItem.current = null
+    dragOver.current = null
+
+    if (from === null || to === null || from === to) return
+
+    // Reorder the sorted array, then reassign zIndices top-to-bottom
+    const reordered = [...sorted]
+    const [moved] = reordered.splice(from, 1)
+    reordered.splice(to, 0, moved)
+
+    // Highest zIndex = index 0 (top layer)
+    const maxZ = reordered.length
+    const updated = reordered.map((el, i) => ({ ...el, zIndex: maxZ - i }))
+    onReorderElements(updated)
   }
 
   return (
-    <div className="flex flex-col gap-0">
-      {/* Add buttons */}
+    <div className="flex flex-col">
+      {/* ── Add elements grid ── */}
       <div className="p-3 border-b border-white/10">
-        <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest mb-2">Add Element</p>
+        <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest mb-2.5">Add Element</p>
         <div className="grid grid-cols-4 gap-1.5">
           {ADD_ITEMS.map(item => (
             <button
               key={item.label}
               onClick={() => onAddElement(item.make() as TemplateElement)}
               title={item.label}
-              className="flex flex-col items-center justify-center gap-1 rounded-lg py-2 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 hover:border-white/25 transition-colors text-[10px]"
+              className="flex flex-col items-center justify-center gap-1 rounded-lg py-2.5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 hover:border-white/25 transition-colors text-[10px] leading-tight"
             >
               {item.icon}
-              <span className="leading-none text-center">{item.label}</span>
+              <span>{item.label}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Tokens */}
+      {/* ── Dynamic tokens ── */}
       <div className="p-3 border-b border-white/10">
-        <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest mb-2">Dynamic Tokens</p>
+        <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest mb-2">Insert Token</p>
         <div className="flex flex-wrap gap-1">
           {TEXT_TOKENS.map(t => (
             <button
               key={t.token}
               title={t.label}
               onClick={() => onAddElement(defaultTextElement({ content: t.token, fontSize: 14, color: "#475569" }) as TemplateElement)}
-              className="px-2 py-0.5 rounded text-[10px] font-mono border border-[#d4af37]/30 text-[#d4af37]/80 hover:bg-[#d4af37]/10 hover:text-[#d4af37] transition-colors"
+              className="px-1.5 py-0.5 rounded text-[9px] font-mono border border-[#d4af37]/30 text-[#d4af37]/80 hover:bg-[#d4af37]/10 hover:text-[#d4af37] transition-colors"
             >
               {t.token}
             </button>
@@ -119,71 +141,82 @@ export function ElementsPanel({
         </div>
       </div>
 
-      {/* Layers */}
+      {/* ── Layers (drag to reorder) ── */}
       <div className="p-3">
-        <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest mb-2">Layers ({template.elements.length})</p>
+        <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest mb-2">
+          Layers <span className="font-normal text-white/20">({template.elements.length}) — drag to reorder</span>
+        </p>
+        {template.elements.length === 0 && (
+          <p className="text-[11px] text-white/20 text-center py-4">No elements yet. Add some above.</p>
+        )}
         <div className="space-y-0.5">
-          {sorted.map(el => (
-            <div
-              key={el.id}
-              onClick={() => onSelectElement(el.id)}
-              className={`group flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
-                selectedId === el.id
-                  ? "bg-[#3b82f6]/15 border border-[#3b82f6]/40"
-                  : "hover:bg-white/5 border border-transparent"
-              }`}
-            >
-              <span className="text-white/30 w-3 flex items-center justify-center shrink-0">{elIcon(el.type)}</span>
-              <span className={`flex-1 text-xs truncate ${el.visible ? "text-white/70" : "text-white/20 line-through"}`}>
-                {elLabel(el)}
-              </span>
-              {/* Actions - only visible on hover or when selected */}
-              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={e => { e.stopPropagation(); move(el.id, "up") }}
-                  className="w-4 h-4 flex items-center justify-center text-white/30 hover:text-white"
-                  title="Bring forward"
-                >
-                  <ChevronUp size={10} />
-                </button>
-                <button
-                  onClick={e => { e.stopPropagation(); move(el.id, "down") }}
-                  className="w-4 h-4 flex items-center justify-center text-white/30 hover:text-white"
-                  title="Send backward"
-                >
-                  <ChevronDown size={10} />
-                </button>
-                <button
-                  onClick={e => { e.stopPropagation(); onToggleVisibility(el.id) }}
-                  className="w-4 h-4 flex items-center justify-center text-white/30 hover:text-white"
-                  title={el.visible ? "Hide" : "Show"}
-                >
-                  {el.visible ? <Eye size={10} /> : <EyeOff size={10} />}
-                </button>
-                <button
-                  onClick={e => { e.stopPropagation(); onToggleLock(el.id) }}
-                  className="w-4 h-4 flex items-center justify-center text-white/30 hover:text-white"
-                  title={el.locked ? "Unlock" : "Lock"}
-                >
-                  {el.locked ? <Lock size={10} /> : <Unlock size={10} />}
-                </button>
-                <button
-                  onClick={e => { e.stopPropagation(); onDuplicateElement(el.id) }}
-                  className="w-4 h-4 flex items-center justify-center text-white/30 hover:text-white"
-                  title="Duplicate"
-                >
-                  <Copy size={10} />
-                </button>
-                <button
-                  onClick={e => { e.stopPropagation(); onRemoveElement(el.id) }}
-                  className="w-4 h-4 flex items-center justify-center text-white/30 hover:text-red-400"
-                  title="Delete"
-                >
-                  <Trash2 size={10} />
-                </button>
+          {sorted.map((el, idx) => {
+            const isSelected = selectedId === el.id
+            const isDragging = dragIdx === idx
+            const isOver = overIdx === idx && dragIdx !== null && dragIdx !== idx
+
+            return (
+              <div
+                key={el.id}
+                draggable
+                onDragStart={() => handleDragStart(idx)}
+                onDragEnter={() => handleDragEnter(idx)}
+                onDragEnd={handleDragEnd}
+                onDragOver={e => e.preventDefault()}
+                onClick={() => onSelectElement(el.id)}
+                className={`group flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer select-none transition-all ${
+                  isSelected
+                    ? "bg-[#3b82f6]/15 border border-[#3b82f6]/40"
+                    : "hover:bg-white/5 border border-transparent"
+                } ${isDragging ? "opacity-40" : "opacity-100"} ${isOver ? "border-t-2 border-t-[#3b82f6]" : ""}`}
+              >
+                {/* Drag grip */}
+                <span className="text-white/20 hover:text-white/50 cursor-grab active:cursor-grabbing shrink-0">
+                  <GripVertical size={12} />
+                </span>
+
+                {/* Type icon */}
+                <span className="shrink-0 w-3.5 flex items-center justify-center">{elIcon(el.type)}</span>
+
+                {/* Label */}
+                <span className={`flex-1 text-[11px] truncate ${el.visible ? "text-white/70" : "text-white/25 line-through"}`}>
+                  {elLabel(el)}
+                </span>
+
+                {/* Action icons — always visible on selected, hover on others */}
+                <div className={`flex items-center gap-0.5 ${isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity`}>
+                  <button
+                    onClick={e => { e.stopPropagation(); onToggleVisibility(el.id) }}
+                    className="w-5 h-5 flex items-center justify-center text-white/30 hover:text-white rounded"
+                    title={el.visible ? "Hide" : "Show"}
+                  >
+                    {el.visible ? <Eye size={11} /> : <EyeOff size={11} />}
+                  </button>
+                  <button
+                    onClick={e => { e.stopPropagation(); onToggleLock(el.id) }}
+                    className="w-5 h-5 flex items-center justify-center text-white/30 hover:text-white rounded"
+                    title={el.locked ? "Unlock" : "Lock"}
+                  >
+                    {el.locked ? <Lock size={10} /> : <Unlock size={10} />}
+                  </button>
+                  <button
+                    onClick={e => { e.stopPropagation(); onDuplicateElement(el.id) }}
+                    className="w-5 h-5 flex items-center justify-center text-white/30 hover:text-white rounded"
+                    title="Duplicate"
+                  >
+                    <Copy size={10} />
+                  </button>
+                  <button
+                    onClick={e => { e.stopPropagation(); onRemoveElement(el.id) }}
+                    className="w-5 h-5 flex items-center justify-center text-white/30 hover:text-red-400 rounded"
+                    title="Delete"
+                  >
+                    <Trash2 size={10} />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>

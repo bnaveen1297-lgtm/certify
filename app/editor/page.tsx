@@ -135,13 +135,27 @@ export default function EditorPage() {
       if (mod && e.key === "d" && selectedId) { e.preventDefault(); duplicateElement(selectedId) }
       if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
         const tag = (e.target as HTMLElement).tagName
-        if (tag !== "INPUT" && tag !== "TEXTAREA") { removeElement(selectedId) }
+        if (tag !== "INPUT" && tag !== "TEXTAREA") { e.preventDefault(); removeElement(selectedId) }
       }
       if (e.key === "Escape") setSelectedId(null)
+      // Arrow key nudge
+      if (selectedId && ["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) {
+        const tag = (e.target as HTMLElement).tagName
+        if (tag !== "INPUT" && tag !== "TEXTAREA") {
+          e.preventDefault()
+          const step = e.shiftKey ? 10 : 1
+          const el = template?.elements.find(x => x.id === selectedId)
+          if (!el) return
+          if (e.key === "ArrowLeft") updateElement(selectedId, { x: Math.max(0, el.x - step) })
+          if (e.key === "ArrowRight") updateElement(selectedId, { x: Math.min(CANVAS_W - el.width, el.x + step) })
+          if (e.key === "ArrowUp") updateElement(selectedId, { y: Math.max(0, el.y - step) })
+          if (e.key === "ArrowDown") updateElement(selectedId, { y: Math.min(CANVAS_H - el.height, el.y + step) })
+        }
+      }
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [undo, redo, save, duplicateElement, removeElement, selectedId])
+  }, [undo, redo, save, duplicateElement, removeElement, updateElement, selectedId, template])
 
   const selectedEl = template?.elements.find(e => e.id === selectedId) ?? null
 
@@ -328,16 +342,18 @@ export default function EditorPage() {
         </aside>
 
         {/* ── Canvas area ── */}
-        <main className="flex-1 min-w-0 bg-[#111827] overflow-auto flex items-start justify-center pt-8 pb-8">
-          <EditorCanvas
-            template={template}
-            selectedId={selectedId}
-            zoom={zoom}
-            onSelectElement={setSelectedId}
-            onUpdateElement={updateElement}
-            onDeselectAll={() => setSelectedId(null)}
-            onUpdateBackground={(bg) => mutate(t => ({ ...t, background: { ...t.background, ...bg } }))}
-          />
+        <main className="flex-1 min-w-0 bg-[#0d1117] overflow-auto">
+          <div className="flex items-start justify-center p-10 min-h-full min-w-max">
+            <EditorCanvas
+              template={template}
+              selectedId={selectedId}
+              zoom={zoom}
+              onSelectElement={setSelectedId}
+              onUpdateElement={updateElement}
+              onDeselectAll={() => setSelectedId(null)}
+              onUpdateBackground={(bg) => mutate(t => ({ ...t, background: { ...t.background, ...bg } }))}
+            />
+          </div>
         </main>
 
         {/* ── Right panel ── */}
