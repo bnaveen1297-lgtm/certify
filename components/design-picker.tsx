@@ -51,29 +51,25 @@ export function DesignPicker({
   const thumbParticipant = previewParticipant || DEFAULT_PARTICIPANT
   const thumbEvent = previewEvent || DEFAULT_EVENT
 
-  // Load saved templates and keep in sync
+  // Load saved templates and keep in sync with localStorage
   useEffect(() => {
     const refresh = () => setCustomTemplates(loadTemplates())
     refresh()
-    // Same-tab navigation: fires when user navigates back via browser history
-    const onPageShow = () => refresh()
-    // Same-tab: fires when tab regains focus from another window
+
+    // Poll every 2s — most reliable way to catch same-tab saves regardless of events
+    const poll = setInterval(refresh, 2000)
+
+    // Event-based triggers as well for instant updates
     const onFocus = () => refresh()
-    // Same-tab: fires after returning from editor via Next.js router
     const onVisibility = () => { if (!document.hidden) refresh() }
-    // Cross-tab: fires when editor tab saves (writes certify_custom_templates or marker key)
     const onStorage = (e: StorageEvent) => {
-      if (
-        e.key === "certify_custom_templates" ||
-        e.key === "certify-templates-updated"
-      ) refresh()
+      if (e.key === "certify_custom_templates" || e.key === "certify-templates-updated") refresh()
     }
-    window.addEventListener("pageshow", onPageShow)
     window.addEventListener("focus", onFocus)
     document.addEventListener("visibilitychange", onVisibility)
     window.addEventListener("storage", onStorage)
     return () => {
-      window.removeEventListener("pageshow", onPageShow)
+      clearInterval(poll)
       window.removeEventListener("focus", onFocus)
       document.removeEventListener("visibilitychange", onVisibility)
       window.removeEventListener("storage", onStorage)

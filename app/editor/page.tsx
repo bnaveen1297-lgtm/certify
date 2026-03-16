@@ -109,8 +109,9 @@ export default function EditorPage() {
   }, [template, mutate])
 
   const removeElement = useCallback((id: string) => {
+    // Always allow deletion — ignore locked flag, user explicitly clicked delete
     mutate(t => ({ ...t, elements: t.elements.filter(e => e.id !== id) }))
-    setSelectedId(null)
+    setSelectedId(prev => prev === id ? null : prev)
   }, [mutate])
 
   const reorderElements = useCallback((elements: TemplateElement[]) => {
