@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorCanvas } from "@/components/editor/editor-canvas"
-import { ElementsPanel } from "@/components/editor/elements-panel2"
+import { ElementsPanel } from "@/components/editor/layer-panel"
 import { PropertiesPanel } from "@/components/editor/properties-panel"
 import {
   ChevronLeft, Save, Download, RotateCcw, RotateCw,
@@ -109,8 +109,9 @@ export default function EditorPage() {
   }, [template, mutate])
 
   const removeElement = useCallback((id: string) => {
+    // Always allow deletion — ignore locked flag, user explicitly clicked delete
     mutate(t => ({ ...t, elements: t.elements.filter(e => e.id !== id) }))
-    setSelectedId(null)
+    setSelectedId(prev => prev === id ? null : prev)
   }, [mutate])
 
   const reorderElements = useCallback((elements: TemplateElement[]) => {
@@ -122,8 +123,7 @@ export default function EditorPage() {
     if (!template) return
     upsertTemplate(template)
     setAllTemplates(loadTemplates())
-    // Write a marker key so storage event fires on other tabs;
-    // visibilitychange listener in DesignPicker handles same-tab navigation
+    // Write a marker key so storage event fires on other tabs
     try { localStorage.setItem("certify-templates-updated", String(Date.now())) } catch { /* noop */ }
     setIsSaved(true)
     setTimeout(() => setIsSaved(false), 2500)
