@@ -5,18 +5,20 @@ import {
   CertificateTemplate, TemplateElement,
   defaultTextElement, defaultHeadingElement, defaultDivider,
   defaultRectangle, defaultEllipse, defaultLogoElement,
+  defaultStar, defaultTrophy, defaultMedal, defaultStarBurst,
+  defaultBadge, defaultStripe, defaultRibbonLabel, defaultBorderFrame,
   TEXT_TOKENS,
 } from "@/lib/template-editor"
 import {
-  Type, Minus, Square, Circle, Image as ImageIcon,
-  Eye, EyeOff, Lock, Unlock, Trash2, Copy, GripVertical,
+  Type, Minus, Square, Circle, Image as ImageIcon, Star, Trophy,
+  Eye, EyeOff, Lock, Unlock, Trash2, Copy, GripVertical, Frame,
 } from "lucide-react"
 
 interface ElementsPanelProps {
   template: CertificateTemplate
   selectedId: string | null
   onSelectElement: (id: string) => void
-  onAddElement: (el: TemplateElement) => void
+  onAddElement: (el: TemplateElement | TemplateElement[]) => void
   onRemoveElement: (id: string) => void
   onDuplicateElement: (id: string) => void
   onReorderElements: (els: TemplateElement[]) => void
@@ -24,7 +26,7 @@ interface ElementsPanelProps {
   onToggleLock: (id: string) => void
 }
 
-const ADD_ITEMS = [
+const ADD_ITEMS: { label: string; icon: React.ReactNode; make: () => TemplateElement | TemplateElement[] }[] = [
   { label: "Heading", icon: <span className="font-black text-[11px]">H</span>, make: () => defaultHeadingElement() },
   { label: "Text", icon: <Type size={13} />, make: () => defaultTextElement({ content: "Click to edit text" }) },
   { label: "Token", icon: <span className="text-[9px] font-bold font-mono">{"{T}"}</span>, make: () => defaultTextElement({ content: "{FullName}", fontSize: 22, fontWeight: "700" }) },
@@ -33,6 +35,16 @@ const ADD_ITEMS = [
   { label: "Circle", icon: <Circle size={12} />, make: () => defaultEllipse() },
   { label: "Org Logo", icon: <ImageIcon size={12} />, make: () => defaultLogoElement("logo_organizer") },
   { label: "Sponsor", icon: <ImageIcon size={12} />, make: () => defaultLogoElement("logo_sponsor") },
+  // Decorative
+  { label: "Border", icon: <Frame size={12} />, make: () => defaultBorderFrame() },
+  { label: "Badge", icon: <Square size={12} />, make: () => defaultBadge() },
+  { label: "Stripe", icon: <Minus size={12} />, make: () => defaultStripe() },
+  { label: "Ribbon", icon: <span className="text-[9px] font-bold">RBN</span>, make: () => defaultRibbonLabel() },
+  // Icons / kids
+  { label: "Star", icon: <Star size={12} />, make: () => defaultStar() },
+  { label: "Trophy", icon: <Trophy size={12} />, make: () => defaultTrophy() },
+  { label: "Medal", icon: <span className="text-[11px]">🥇</span>, make: () => defaultMedal() },
+  { label: "Sparkle", icon: <span className="text-[11px]">🌟</span>, make: () => defaultStarBurst() },
 ]
 
 function elIcon(type: string) {
@@ -113,7 +125,7 @@ export function ElementsPanel({
           {ADD_ITEMS.map(item => (
             <button
               key={item.label}
-              onClick={() => onAddElement(item.make() as TemplateElement)}
+              onClick={() => onAddElement(item.make() as TemplateElement | TemplateElement[])}
               title={item.label}
               className="flex flex-col items-center justify-center gap-1 rounded-lg py-2.5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 hover:border-white/25 transition-colors text-[10px] leading-tight"
             >

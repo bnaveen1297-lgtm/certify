@@ -291,7 +291,84 @@ export function defaultLogoElement(type: "logo_organizer" | "logo_sponsor"): Log
   }
 }
 
-// ─── Blank canvas template ───────────────────────────────────────────────────
+// ─── Extended element factories ─────────────────────────────────────────────
+
+/** Double-line border frame (two concentric rectangles) — adds 2 elements */
+export function defaultBorderFrame(): [ShapeElement, ShapeElement] {
+  return [
+    defaultRectangle({ x: 10, y: 10, width: 780, height: 546, stroke: "#b8860b", strokeWidth: 3, zIndex: 1 }),
+    defaultRectangle({ x: 18, y: 18, width: 764, height: 530, stroke: "#b8860b80", strokeWidth: 1, zIndex: 2 }),
+  ]
+}
+
+/** Decorative corner badge (filled rectangle, top-left) */
+export function defaultBadge(overrides: Partial<ShapeElement> = {}): ShapeElement {
+  return {
+    id: genId(), type: "rectangle",
+    x: 30, y: 240, width: 120, height: 36,
+    rotation: 0, opacity: 100, locked: false, visible: true, zIndex: 8,
+    fill: "#b8860b", stroke: "transparent", strokeWidth: 0, borderRadius: 4,
+    ...overrides,
+  }
+}
+
+/** Star shape as a text element using unicode ★ */
+export function defaultStar(overrides: Partial<TextElement> = {}): TextElement {
+  return defaultTextElement({
+    content: "★", fontSize: 40, color: "#d4af37",
+    x: 370, y: 60, width: 60, height: 60,
+    fontFamily: "system-ui, sans-serif",
+    ...overrides,
+  })
+}
+
+/** Trophy icon (unicode) */
+export function defaultTrophy(overrides: Partial<TextElement> = {}): TextElement {
+  return defaultTextElement({
+    content: "🏆", fontSize: 48, color: "#d4af37",
+    x: 360, y: 50, width: 80, height: 72,
+    fontFamily: "system-ui, sans-serif",
+    ...overrides,
+  })
+}
+
+/** Medal ribbon element (text-based) */
+export function defaultMedal(overrides: Partial<TextElement> = {}): TextElement {
+  return defaultTextElement({
+    content: "🥇", fontSize: 48,
+    x: 360, y: 50, width: 80, height: 72,
+    fontFamily: "system-ui, sans-serif",
+    ...overrides,
+  })
+}
+
+/** Kids star burst (text emoji) */
+export function defaultStarBurst(overrides: Partial<TextElement> = {}): TextElement {
+  return defaultTextElement({
+    content: "🌟", fontSize: 36,
+    x: 40, y: 40, width: 60, height: 54,
+    fontFamily: "system-ui, sans-serif",
+    ...overrides,
+  })
+}
+
+/** Checkered border strip (decorative rectangle row) */
+export function defaultStripe(color = "#d4af37", overrides: Partial<ShapeElement> = {}): ShapeElement {
+  return defaultRectangle({
+    x: 0, y: 0, width: 800, height: 12,
+    fill: color, stroke: "transparent", strokeWidth: 0,
+    zIndex: 3, ...overrides,
+  })
+}
+
+/** Ribbon label — coloured rectangle with text on it (returns 2 elements) */
+export function defaultRibbonLabel(text = "WINNER"): [ShapeElement, TextElement] {
+  const id = genId()
+  return [
+    defaultRectangle({ x: 0, y: 200, width: 160, height: 36, fill: "#b8860b", stroke: "transparent", strokeWidth: 0, borderRadius: 0, zIndex: 6 }),
+    defaultTextElement({ content: text, x: 0, y: 200, width: 160, height: 36, fontSize: 13, fontWeight: "700", color: "#ffffff", textAlign: "center", zIndex: 7 }),
+  ]
+}
 export function blankTemplate(): CertificateTemplate {
   const now = new Date().toISOString()
   return {

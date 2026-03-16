@@ -124,8 +124,9 @@ export function EditorCanvas({
   const beginMove = useCallback((e: React.PointerEvent, el: TemplateElement) => {
     if (el.locked) return
     e.stopPropagation()
-    // Capture on the stable container — survives React re-renders
-    containerRef.current?.setPointerCapture(e.pointerId)
+    e.preventDefault()
+    // Use nativeEvent.pointerId — synthetic event may be pooled before setPointerCapture
+    containerRef.current?.setPointerCapture(e.nativeEvent.pointerId)
     containerRef.current!.style.cursor = "grabbing"
     onSelectElement(el.id)
     state.current = {
@@ -137,7 +138,8 @@ export function EditorCanvas({
 
   const beginResize = useCallback((e: React.PointerEvent, el: TemplateElement, handle: Handle) => {
     e.stopPropagation()
-    containerRef.current?.setPointerCapture(e.pointerId)
+    e.preventDefault()
+    containerRef.current?.setPointerCapture(e.nativeEvent.pointerId)
     containerRef.current!.style.cursor = CURSOR_MAP[handle]
     state.current = {
       dragging: true, mode: "resize", id: el.id, handle,

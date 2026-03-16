@@ -16,7 +16,8 @@ import { DesignPicker } from "./design-picker"
 import { WordingEditor } from "./wording-editor"
 import { LogoUploader } from "./logo-uploader"
 import { SignatoryEditor } from "./signatory-editor"
-import { CertificateRenderer } from "./certificate-renderer"
+import { CertificateRenderer, CustomTemplateRenderer } from "./certificate-renderer"
+import { loadTemplates } from "@/lib/template-editor"
 import { WORDING_TEMPLATES } from "@/lib/certificate-wording"
 import { MOCK_PARTICIPANTS } from "@/lib/mock-participants"
 import type { Participant } from "@/lib/csv-fields"
@@ -644,8 +645,33 @@ export function DashboardView({ onPublish, onLogout, tournamentHistory, onViewTo
                   <div className="xl:w-[480px] shrink-0">
                     <div className="sticky top-24">
                       <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
-                        <h3 className="text-sm font-semibold text-foreground mb-2">Live Preview</h3>
+                        <h3 className="text-sm font-semibold text-foreground mb-2">Live Preview
+                          {selectedCustomTemplateId && <span className="ml-2 text-xs text-[#d4af37] font-normal">Custom Template</span>}
+                        </h3>
                         <div className="overflow-hidden rounded border border-border">
+                          {selectedCustomTemplateId ? (() => {
+                            const tpl = loadTemplates().find(t => t.id === selectedCustomTemplateId)
+                            return tpl ? (
+                              <CustomTemplateRenderer
+                                template={tpl}
+                                participant={previewParticipant}
+                                event={eventData}
+                                scale={0.56}
+                              />
+                            ) : (
+                              <CertificateRenderer
+                                designId={selectedDesign}
+                                participant={previewParticipant}
+                                event={eventData}
+                                wordingTemplate={customWording}
+                                signatories={signatories.filter(s => s.name || s.designation)}
+                                organizerLogo={organizerLogo}
+                                sponsorLogos={sponsorLogos}
+                                scale={0.56}
+                                customColors={Object.keys(customColors).length > 0 ? customColors : undefined}
+                              />
+                            )
+                          })() : (
                           <CertificateRenderer
                             designId={selectedDesign}
                             participant={previewParticipant}
@@ -657,6 +683,7 @@ export function DashboardView({ onPublish, onLogout, tournamentHistory, onViewTo
                             scale={0.56}
                             customColors={Object.keys(customColors).length > 0 ? customColors : undefined}
                           />
+                          )}
                         </div>
                         <p className="mt-2 text-xs text-muted-foreground text-center">
                           Previewing: {previewParticipant.title} {previewParticipant.name} | {previewParticipant.position} in {previewParticipant.category}

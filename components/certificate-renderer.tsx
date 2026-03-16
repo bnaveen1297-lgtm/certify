@@ -493,9 +493,119 @@ export function CertificateRenderer({ designId, participant, event, wordingTempl
   )
 }
 
+import type { CertificateTemplate, TemplateElement, TextElement, ShapeElement, DividerElement, LogoElement } from "@/lib/template-editor"
+
 /* ============================================================
-   PDF DOWNLOAD
+   CUSTOM TEMPLATE RENDERER – renders a saved editor template
    ============================================================ */
+function resolveTokens(content: string, p: Participant, event: EventData): string {
+  return content
+    .replace(/\{FullName\}/g, `${p.title} ${p.name}`)
+    .replace(/\{Name\}/g, p.name)
+    .replace(/\{Title\}/g, p.title)
+    .replace(/\{Position\}/g, p.position)
+    .replace(/\{Category\}/g, p.category)
+    .replace(/\{Points\}/g, p.points)
+    .replace(/\{TournamentName\}/g, event.tournamentName)
+    .replace(/\{Venue\}/g, event.venue)
+    .replace(/\{StartDate\}/g, event.startDate)
+    .replace(/\{EndDate\}/g, event.endDate || "")
+    .replace(/\{Rounds\}/g, event.totalRounds)
+}
+
+export function CustomTemplateRenderer({ template, participant, event, scale = 1 }: {
+  template: CertificateTemplate
+  participant: Participant
+  event: EventData
+  scale?: number
+}) {
+  const bg = template.background
+  const sorted = [...template.elements].sort((a, b) => a.zIndex - b.zIndex)
+
+  function renderEl(el: TemplateElement) {
+    if (!el.visible) return null
+    const base: React.CSSProperties = {
+      position: "absolute",
+      left: el.x, top: el.y,
+      width: el.width, height: el.height,
+      transform: `rotate(${el.rotation}deg)`,
+      opacity: el.opacity / 100,
+      boxSizing: "border-box",
+    }
+
+    if (el.type === "text" || el.type === "heading") {
+      const te = el as TextElement
+      return (
+        <div key={el.id} style={{
+          ...base,
+          fontFamily: te.fontFamily,
+          fontSize: te.fontSize,
+          fontWeight: te.fontWeight as any,
+          fontStyle: te.fontStyle,
+          color: te.color,
+          textAlign: te.textAlign,
+          letterSpacing: `${te.letterSpacing}em`,
+          lineHeight: te.lineHeight,
+          textDecoration: te.textDecoration,
+          backgroundColor: te.backgroundColor === "transparent" ? undefined : te.backgroundColor,
+          borderRadius: te.borderRadius,
+          padding: te.padding,
+          display: "flex", alignItems: "center",
+          justifyContent: te.textAlign === "left" ? "flex-start" : te.textAlign === "right" ? "flex-end" : "center",
+          whiteSpace: "pre-wrap", wordBreak: "break-word",
+        }}>
+          {resolveTokens(te.content, participant, event)}
+        </div>
+      )
+    }
+    if (el.type === "divider") {
+      const de = el as DividerElement
+      return (
+        <div key={el.id} style={{ ...base, display: "flex", alignItems: "center" }}>
+          <div style={{ width: "100%", borderTop: `${de.strokeWidth}px ${de.style} ${de.stroke}` }} />
+        </div>
+      )
+    }
+    if (el.type === "rectangle") {
+      const se = el as ShapeElement
+      return <div key={el.id} style={{ ...base, backgroundColor: se.fill === "transparent" ? undefined : se.fill, border: `${se.strokeWidth}px solid ${se.stroke}`, borderRadius: se.borderRadius }} />
+    }
+    if (el.type === "ellipse") {
+      const se = el as ShapeElement
+      return <div key={el.id} style={{ ...base, backgroundColor: se.fill === "transparent" ? undefined : se.fill, border: `${se.strokeWidth}px solid ${se.stroke}`, borderRadius: "50%" }} />
+    }
+    if (el.type === "logo_organizer" || el.type === "logo_sponsor") {
+      const le = el as LogoElement
+      return le.src ? (
+        <img key={el.id} src={le.src} alt={le.label} style={{ ...base, objectFit: le.objectFit, display: "block" }} crossOrigin="anonymous" />
+      ) : null
+    }
+    return null
+  }
+
+  return (
+    <div style={{ width: Math.round(W * scale), height: Math.round(H * scale), overflow: "hidden", flexShrink: 0 }}>
+      <div data-certificate style={{
+        width: W, height: H,
+        position: "relative",
+        backgroundColor: bg.type === "solid" ? bg.color : undefined,
+        backgroundImage: bg.type === "gradient" ? bg.gradient : bg.type === "image" && bg.imageSrc ? `url(${bg.imageSrc})` : undefined,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        border: `${bg.borderWidth}px solid ${bg.borderColor}`,
+        overflow: "hidden",
+        fontFamily: "system-ui, sans-serif",
+        transform: `scale(${scale})`,
+        transformOrigin: "top left",
+        boxSizing: "border-box",
+      }}>
+        {sorted.map(renderEl)}
+      </div>
+    </div>
+  )
+}
+
+
 export async function downloadCertificateAsPDF(containerEl: HTMLDivElement | null, filename: string): Promise<boolean> {
   if (!containerEl) return false
   const certEl = containerEl.querySelector("[data-certificate]") as HTMLElement

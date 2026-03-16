@@ -93,9 +93,10 @@ export default function EditorPage() {
     }))
   }, [mutate])
 
-  const addElement = useCallback((el: TemplateElement) => {
-    mutate(t => ({ ...t, elements: [...t.elements, el] }))
-    setSelectedId(el.id)
+  const addElement = useCallback((el: TemplateElement | TemplateElement[]) => {
+    const els = Array.isArray(el) ? el : [el]
+    mutate(t => ({ ...t, elements: [...t.elements, ...els] }))
+    setSelectedId(els[els.length - 1].id)
   }, [mutate])
 
   const duplicateElement = useCallback((id: string) => {
@@ -122,7 +123,9 @@ export default function EditorPage() {
     upsertTemplate(template)
     setAllTemplates(loadTemplates())
     setIsSaved(true)
-    setTimeout(() => setIsSaved(false), 2000)
+    // Notify opener/parent tab that templates changed so dashboard can refresh
+    try { window.opener?.dispatchEvent(new Event("focus")) } catch { /* noop */ }
+    setTimeout(() => setIsSaved(false), 2500)
   }, [template])
 
   // ── Keyboard shortcuts
@@ -174,11 +177,18 @@ export default function EditorPage() {
         {/* Back */}
         <Button
           variant="ghost" size="sm"
-          onClick={() => router.push("/")}
+          onClick={() => {
+            // Editor opens in a new tab — close it; fall back to router if same tab
+            if (window.history.length <= 1 || window.opener) {
+              window.close()
+            } else {
+              router.back()
+            }
+          }}
           className="text-white/60 hover:text-white hover:bg-white/10 gap-1.5"
         >
           <ChevronLeft className="h-4 w-4" />
-          Dashboard
+          Back
         </Button>
 
         <div className="w-px h-5 bg-white/10" />
