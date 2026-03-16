@@ -32,12 +32,21 @@ export default function EditorPage() {
   const [editingName, setEditingName] = useState(false)
   const [allTemplates, setAllTemplates] = useState<CertificateTemplate[]>([])
   const [leftPanel, setLeftPanel] = useState<"elements" | "templates">("elements")
+  
+  // Refresh templates when switching to templates panel
+  const switchToTemplatesPanel = useCallback(() => {
+    const templates = loadTemplates()
+    console.log("[v0] Switching to templates panel - count:", templates.length, templates.map(t => t.name))
+    setAllTemplates(templates)
+    setLeftPanel("templates")
+  }, [])
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   // Load template on mount
   useEffect(() => {
     const id = searchParams?.get("id")
     const templates = loadTemplates()
+    console.log("[v0] Initial load - templates count:", templates.length, templates.map(t => t.name))
     setAllTemplates(templates)
     if (id) {
       const found = templates.find(t => t.id === id)
@@ -121,8 +130,10 @@ export default function EditorPage() {
   // ── Save
   const save = useCallback(() => {
     if (!template) return
+    console.log("[v0] Saving template:", template.id, template.name)
     upsertTemplate(template)
     const updatedTemplates = loadTemplates()
+    console.log("[v0] Loaded templates after save:", updatedTemplates.length, updatedTemplates.map(t => t.name))
     setAllTemplates(updatedTemplates)
     // Write a marker key so storage event fires on other tabs
     try { localStorage.setItem("certify-templates-updated", String(Date.now())) } catch { /* noop */ }
@@ -293,7 +304,7 @@ export default function EditorPage() {
               <Plus className="h-3.5 w-3.5" /> Add Elements
             </button>
             <button
-              onClick={() => setLeftPanel("templates")}
+              onClick={switchToTemplatesPanel}
               className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold transition-colors ${
                 leftPanel === "templates" ? "text-[#d4af37] border-b-2 border-[#d4af37]" : "text-white/40 hover:text-white/70"
               }`}

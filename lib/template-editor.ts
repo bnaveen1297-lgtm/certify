@@ -143,9 +143,13 @@ const STORAGE_KEY = "certify_custom_templates"
 export function loadTemplates(): CertificateTemplate[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
+    console.log("[v0] loadTemplates raw:", raw ? raw.substring(0, 100) + "..." : "null")
     if (!raw) return []
-    return JSON.parse(raw) as CertificateTemplate[]
-  } catch {
+    const parsed = JSON.parse(raw) as CertificateTemplate[]
+    console.log("[v0] loadTemplates parsed count:", parsed.length)
+    return parsed
+  } catch (e) {
+    console.log("[v0] loadTemplates error:", e)
     return []
   }
 }
@@ -171,11 +175,18 @@ export function saveTemplates(templates: CertificateTemplate[]): void {
 }
 
 export function upsertTemplate(tpl: CertificateTemplate): void {
+  console.log("[v0] upsertTemplate called for:", tpl.id, tpl.name)
   const all = loadTemplates()
   const idx = all.findIndex(t => t.id === tpl.id)
-  if (idx >= 0) all[idx] = tpl
-  else all.unshift(tpl)
+  if (idx >= 0) {
+    all[idx] = tpl
+    console.log("[v0] upsertTemplate: updated existing at index", idx)
+  } else {
+    all.unshift(tpl)
+    console.log("[v0] upsertTemplate: added new template")
+  }
   saveTemplates(all)
+  console.log("[v0] upsertTemplate: saved, total count:", all.length)
 }
 
 export function deleteTemplate(id: string): void {
