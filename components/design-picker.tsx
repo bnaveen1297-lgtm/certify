@@ -53,7 +53,11 @@ export function DesignPicker({
 
   // Load saved templates and keep in sync with localStorage
   useEffect(() => {
-    const refresh = () => setCustomTemplates(loadTemplates())
+    const refresh = () => {
+      const templates = loadTemplates()
+      console.log("[v0] DesignPicker loadTemplates():", templates.length, "templates", templates.map(t => t.name))
+      setCustomTemplates(templates)
+    }
     refresh()
 
     // Poll every 2s — most reliable way to catch same-tab saves regardless of events

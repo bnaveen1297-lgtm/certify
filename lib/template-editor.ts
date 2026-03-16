@@ -143,9 +143,13 @@ const STORAGE_KEY = "certify_custom_templates"
 export function loadTemplates(): CertificateTemplate[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
+    console.log("[v0] loadTemplates - raw from localStorage:", raw ? raw.substring(0, 100) + "..." : "null")
     if (!raw) return []
-    return JSON.parse(raw) as CertificateTemplate[]
-  } catch {
+    const parsed = JSON.parse(raw) as CertificateTemplate[]
+    console.log("[v0] loadTemplates - parsed:", parsed.length, "templates")
+    return parsed
+  } catch (err) {
+    console.log("[v0] loadTemplates - error:", err)
     return []
   }
 }
