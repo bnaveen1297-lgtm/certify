@@ -55,15 +55,25 @@ export function DesignPicker({
   useEffect(() => {
     const refresh = () => setCustomTemplates(loadTemplates())
     refresh()
+    // Same-tab navigation: fires when user navigates back via browser history
+    const onPageShow = () => refresh()
+    // Same-tab: fires when tab regains focus from another window
     const onFocus = () => refresh()
+    // Same-tab: fires after returning from editor via Next.js router
     const onVisibility = () => { if (!document.hidden) refresh() }
+    // Cross-tab: fires when editor tab saves (writes certify_custom_templates or marker key)
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "certify-templates-updated" || e.key === "certify-templates") refresh()
+      if (
+        e.key === "certify_custom_templates" ||
+        e.key === "certify-templates-updated"
+      ) refresh()
     }
+    window.addEventListener("pageshow", onPageShow)
     window.addEventListener("focus", onFocus)
     document.addEventListener("visibilitychange", onVisibility)
     window.addEventListener("storage", onStorage)
     return () => {
+      window.removeEventListener("pageshow", onPageShow)
       window.removeEventListener("focus", onFocus)
       document.removeEventListener("visibilitychange", onVisibility)
       window.removeEventListener("storage", onStorage)

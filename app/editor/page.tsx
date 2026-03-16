@@ -129,32 +129,36 @@ export default function EditorPage() {
     setTimeout(() => setIsSaved(false), 2500)
   }, [template])
 
-  // ── Keyboard shortcuts
+  // Keyboard shortcuts — attached to window so they fire regardless of focus target
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey
+      const tag = (e.target as HTMLElement).tagName
+      const isInput = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement).isContentEditable
+
       if (mod && e.key === "z" && !e.shiftKey) { e.preventDefault(); undo() }
       if (mod && (e.key === "y" || (e.key === "z" && e.shiftKey))) { e.preventDefault(); redo() }
       if (mod && e.key === "s") { e.preventDefault(); save() }
       if (mod && e.key === "d" && selectedId) { e.preventDefault(); duplicateElement(selectedId) }
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
-        const tag = (e.target as HTMLElement).tagName
-        if (tag !== "INPUT" && tag !== "TEXTAREA") { e.preventDefault(); removeElement(selectedId) }
+
+      // Delete / Backspace — works when not typing in an input
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedId && !isInput) {
+        e.preventDefault()
+        removeElement(selectedId)
       }
+
       if (e.key === "Escape") setSelectedId(null)
+
       // Arrow key nudge
-      if (selectedId && ["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) {
-        const tag = (e.target as HTMLElement).tagName
-        if (tag !== "INPUT" && tag !== "TEXTAREA") {
-          e.preventDefault()
-          const step = e.shiftKey ? 10 : 1
-          const el = template?.elements.find(x => x.id === selectedId)
-          if (!el) return
-          if (e.key === "ArrowLeft") updateElement(selectedId, { x: Math.max(0, el.x - step) })
-          if (e.key === "ArrowRight") updateElement(selectedId, { x: Math.min(CANVAS_W - el.width, el.x + step) })
-          if (e.key === "ArrowUp") updateElement(selectedId, { y: Math.max(0, el.y - step) })
-          if (e.key === "ArrowDown") updateElement(selectedId, { y: Math.min(CANVAS_H - el.height, el.y + step) })
-        }
+      if (selectedId && ["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key) && !isInput) {
+        e.preventDefault()
+        const step = e.shiftKey ? 10 : 1
+        const el = template?.elements.find(x => x.id === selectedId)
+        if (!el) return
+        if (e.key === "ArrowLeft") updateElement(selectedId, { x: Math.max(0, el.x - step) })
+        if (e.key === "ArrowRight") updateElement(selectedId, { x: Math.min(CANVAS_W - el.width, el.x + step) })
+        if (e.key === "ArrowUp") updateElement(selectedId, { y: Math.max(0, el.y - step) })
+        if (e.key === "ArrowDown") updateElement(selectedId, { y: Math.min(CANVAS_H - el.height, el.y + step) })
       }
     }
     window.addEventListener("keydown", handler)

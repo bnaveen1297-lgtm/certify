@@ -212,7 +212,7 @@ export function ElementsPanel({
                 <span className={`flex-1 text-[11px] truncate ${el.visible ? "text-white/70" : "text-white/25 line-through"}`}>
                   {elLabel(el)}
                 </span>
-                {/* Action buttons — always visible, not just on hover/selected */}
+                {/* Action buttons — always visible so delete is always accessible */}
                 <div className="flex items-center gap-0.5">
                   <button
                     onClick={e => { e.stopPropagation(); onToggleVisibility(el.id) }}
