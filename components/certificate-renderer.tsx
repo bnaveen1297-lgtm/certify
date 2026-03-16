@@ -531,6 +531,7 @@ export function CertificateThumbnail({ designId, colors, isSelected, onClick }: 
   const mockSigs: Signatory[] = []
   const mockWording = "for outstanding performance in the tournament."
   const S = 130 / W  // thumbnail scale
+  const BodyComp = BODY_MAP[designId] || D1
 
   return (
     <button onClick={onClick} style={{ all: "unset", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
@@ -545,7 +546,7 @@ export function CertificateThumbnail({ designId, colors, isSelected, onClick }: 
         <div style={{ transform: `scale(${S})`, transformOrigin: "top left", width: W, height: H, pointerEvents: "none" }}>
           <div style={{ width: W, height: H, backgroundColor: d.bgColor, border: `2px solid ${d.borderColor}`, display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: "system-ui,sans-serif" }}>
             <HeaderBar orgLogo={null} sponsors={[]} />
-            <BODY_MAP[designId]
+            <BodyComp
               d={d} body={mockWording} p={mockP} title="Certificate of Merit" event={mockEvent}
             />
             <FooterBar sigs={mockSigs} textColor={d.textColor} accentColor={d.accentColor} />
