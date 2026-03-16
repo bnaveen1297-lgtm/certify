@@ -51,7 +51,7 @@ export function DesignPicker({
   const thumbParticipant = previewParticipant || DEFAULT_PARTICIPANT
   const thumbEvent = previewEvent || DEFAULT_EVENT
 
-  // Load saved templates and keep in sync with localStorage
+  // Load saved templates from localStorage and keep in sync
   useEffect(() => {
     const refresh = () => setCustomTemplates(loadTemplates())
     refresh()
