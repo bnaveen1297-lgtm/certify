@@ -456,6 +456,7 @@ function D20({ d, body, p, title, event }: BodyProps) {
   )
 }
 
+/* Lookup map: designId → body component. Must use a local variable before JSX — bracket indexing is not valid JSX syntax. */
 const BODY_MAP: Record<number, React.ComponentType<BodyProps>> = {
   1: D1, 2: D2, 3: D3, 4: D4, 5: D5, 6: D6, 7: D7, 8: D8, 9: D9, 10: D10,
   11: D11, 12: D12, 13: D13, 14: D14, 15: D15, 16: D16, 17: D17, 18: D18, 19: D19, 20: D20,
