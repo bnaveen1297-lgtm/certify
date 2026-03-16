@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorCanvas } from "@/components/editor/editor-canvas"
-import { ElementsPanel } from "@/components/editor/elements-panel2"
+import { ElementsPanel } from "@/components/editor/elements-panel"
 import { PropertiesPanel } from "@/components/editor/properties-panel"
 import {
   ChevronLeft, Save, Download, RotateCcw, RotateCw,
@@ -109,13 +109,8 @@ export default function EditorPage() {
   }, [template, mutate])
 
   const removeElement = useCallback((id: string) => {
-    console.log("[v0] removeElement called with id:", id)
     // Always allow deletion — ignore locked flag, user explicitly clicked delete
-    mutate(t => {
-      const newElements = t.elements.filter(e => e.id !== id)
-      console.log("[v0] After filter, elements count:", newElements.length, "(was", t.elements.length, ")")
-      return { ...t, elements: newElements }
-    })
+    mutate(t => ({ ...t, elements: t.elements.filter(e => e.id !== id) }))
     setSelectedId(prev => prev === id ? null : prev)
   }, [mutate])
 
@@ -126,13 +121,9 @@ export default function EditorPage() {
   // ── Save
   const save = useCallback(() => {
     if (!template) return
-    console.log("[v0] Editor saving template:", template.id, template.name, template.elements.length, "elements")
     upsertTemplate(template)
-    const afterSave = loadTemplates()
-    console.log("[v0] After upsertTemplate, loadTemplates returns:", afterSave.length, "templates")
-    setAllTemplates(afterSave)
-    // Write a marker key so storage event fires on other tabs;
-    // visibilitychange listener in DesignPicker handles same-tab navigation
+    setAllTemplates(loadTemplates())
+    // Write a marker key so storage event fires on other tabs
     try { localStorage.setItem("certify-templates-updated", String(Date.now())) } catch { /* noop */ }
     setIsSaved(true)
     setTimeout(() => setIsSaved(false), 2500)

@@ -138,12 +138,13 @@ export function EditorCanvas({
   }, []) // empty — uses refs
 
   const beginMove = useCallback((e: React.PointerEvent, el: TemplateElement) => {
-    if (el.locked) return
     e.stopPropagation()
     // NOTE: do NOT call e.preventDefault() here — it blocks the click event
     containerRef.current?.setPointerCapture(e.nativeEvent.pointerId)
+    // Always start drag state — even for locked elements, so click-to-select works in onUp
+    // The actual movement is blocked in onMove if locked
     state.current = {
-      dragging: true, mode: "move", id: el.id, handle: null,
+      dragging: true, mode: el.locked ? null : "move", id: el.id, handle: null,
       startClientX: e.clientX, startClientY: e.clientY,
       origX: el.x, origY: el.y, origW: el.width, origH: el.height,
       moved: false,
@@ -277,13 +278,14 @@ export function EditorCanvas({
               position: "absolute",
               left: el.x - 1.5, top: el.y - 1.5,
               width: el.width + 3, height: el.height + 3,
-              border: "1.5px solid #3b82f6",
+              border: el.locked ? "1.5px dashed #f59e0b" : "1.5px solid #3b82f6",
               borderRadius: el.type === "ellipse" ? "50%" : 2,
               pointerEvents: "none",
               transform: `rotate(${el.rotation}deg)`,
               transformOrigin: `${el.width / 2 + 1.5}px ${el.height / 2 + 1.5}px`,
             }} />
-            {HANDLES.map(h => {
+            {/* Only show resize handles if element is not locked */}
+            {!el.locked && HANDLES.map(h => {
               const hp = HANDLE_POS[h]
               return (
                 <div
