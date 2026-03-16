@@ -361,7 +361,108 @@ export function defaultStripe(color = "#d4af37", overrides: Partial<ShapeElement
   })
 }
 
-/** Ribbon label — coloured rectangle with text on it (returns 2 elements) */
+// ─── Border presets (many styles) ──────────────────────────────────────────
+
+/** Single thin border */
+export function borderSingle(color = "#b8860b"): ShapeElement[] {
+  return [defaultRectangle({ x: 10, y: 10, width: 780, height: 546, stroke: color, strokeWidth: 1.5, fill: "transparent", zIndex: 1 })]
+}
+
+/** Double-line border */
+export function borderDouble(color = "#b8860b"): ShapeElement[] {
+  return [
+    defaultRectangle({ x: 8, y: 8, width: 784, height: 550, stroke: color, strokeWidth: 3, fill: "transparent", zIndex: 1 }),
+    defaultRectangle({ x: 16, y: 16, width: 768, height: 534, stroke: color, strokeWidth: 1, fill: "transparent", zIndex: 2 }),
+  ]
+}
+
+/** Triple-line border */
+export function borderTriple(color = "#b8860b"): ShapeElement[] {
+  return [
+    defaultRectangle({ x: 6, y: 6, width: 788, height: 554, stroke: color, strokeWidth: 4, fill: "transparent", zIndex: 1 }),
+    defaultRectangle({ x: 14, y: 14, width: 772, height: 538, stroke: color, strokeWidth: 1, fill: "transparent", zIndex: 2 }),
+    defaultRectangle({ x: 20, y: 20, width: 760, height: 526, stroke: color, strokeWidth: 1, fill: "transparent", zIndex: 3 }),
+  ]
+}
+
+/** Dashed border */
+export function borderDashed(color = "#b8860b"): DividerElement[] {
+  // Use 4 dividers to approximate a dashed border frame
+  return [
+    { id: genId(), type: "divider", x: 10, y: 10, width: 780, height: 4, rotation: 0, opacity: 100, locked: false, visible: true, zIndex: 2, stroke: color, strokeWidth: 2, style: "dashed" },
+    { id: genId(), type: "divider", x: 10, y: 552, width: 780, height: 4, rotation: 0, opacity: 100, locked: false, visible: true, zIndex: 2, stroke: color, strokeWidth: 2, style: "dashed" },
+    { id: genId(), type: "divider", x: 10, y: 10, width: 4, height: 542, rotation: 90, opacity: 100, locked: false, visible: true, zIndex: 2, stroke: color, strokeWidth: 2, style: "dashed" },
+    { id: genId(), type: "divider", x: 786, y: 10, width: 4, height: 542, rotation: 90, opacity: 100, locked: false, visible: true, zIndex: 2, stroke: color, strokeWidth: 2, style: "dashed" },
+  ]
+}
+
+/** Thick colored solid border */
+export function borderThick(color = "#1e3a5f"): ShapeElement[] {
+  return [defaultRectangle({ x: 0, y: 0, width: 800, height: 566, stroke: color, strokeWidth: 14, fill: "transparent", zIndex: 1 })]
+}
+
+/** Top + bottom stripe bars (institutional style) */
+export function borderStripes(color = "#d4af37"): ShapeElement[] {
+  return [
+    defaultRectangle({ x: 0, y: 0, width: 800, height: 18, fill: color, stroke: "transparent", strokeWidth: 0, borderRadius: 0, zIndex: 2 }),
+    defaultRectangle({ x: 0, y: 548, width: 800, height: 18, fill: color, stroke: "transparent", strokeWidth: 0, borderRadius: 0, zIndex: 2 }),
+  ]
+}
+
+/** Four corner accent squares */
+export function borderCornerSquares(color = "#b8860b"): ShapeElement[] {
+  const sq = (x: number, y: number): ShapeElement => defaultRectangle({ x, y, width: 24, height: 24, fill: color, stroke: "transparent", strokeWidth: 0, borderRadius: 2, zIndex: 4 })
+  return [sq(8, 8), sq(768, 8), sq(8, 534), sq(768, 534)]
+}
+
+/** Corner L-brackets */
+export function borderCornerBrackets(color = "#b8860b"): ShapeElement[] {
+  const hBar = (x: number, y: number): ShapeElement => defaultRectangle({ x, y, width: 50, height: 4, fill: color, stroke: "transparent", strokeWidth: 0, borderRadius: 0, zIndex: 4 })
+  const vBar = (x: number, y: number): ShapeElement => defaultRectangle({ x, y, width: 4, height: 50, fill: color, stroke: "transparent", strokeWidth: 0, borderRadius: 0, zIndex: 4 })
+  return [
+    hBar(8, 8), vBar(8, 8),             // top-left
+    hBar(742, 8), vBar(788, 8),          // top-right
+    hBar(8, 554), vBar(8, 508),          // bottom-left
+    hBar(742, 554), vBar(788, 508),      // bottom-right
+  ]
+}
+
+/** Rounded shadow box */
+export function borderRounded(color = "#4f46e5"): ShapeElement[] {
+  return [defaultRectangle({ x: 12, y: 12, width: 776, height: 542, stroke: color, strokeWidth: 2, fill: "transparent", borderRadius: 16, zIndex: 1 })]
+}
+
+/** Full colored filled border panel (left strip) */
+export function borderLeftAccent(color = "#1e3a5f"): ShapeElement[] {
+  return [defaultRectangle({ x: 0, y: 0, width: 12, height: 566, fill: color, stroke: "transparent", strokeWidth: 0, borderRadius: 0, zIndex: 2 })]
+}
+
+/** Double outer + thick inner */
+export function borderOrnate(color = "#8b0000"): ShapeElement[] {
+  return [
+    defaultRectangle({ x: 4, y: 4, width: 792, height: 558, stroke: color, strokeWidth: 5, fill: "transparent", zIndex: 1 }),
+    defaultRectangle({ x: 14, y: 14, width: 772, height: 538, stroke: color, strokeWidth: 1, fill: "transparent", zIndex: 2 }),
+    defaultRectangle({ x: 20, y: 20, width: 760, height: 526, stroke: color + "60", strokeWidth: 1, fill: "transparent", zIndex: 3 }),
+  ]
+}
+
+// Border preset registry for the elements panel
+export const BORDER_PRESETS: { label: string; make: () => TemplateElement[] }[] = [
+  { label: "Single", make: () => borderSingle() },
+  { label: "Double", make: () => borderDouble() },
+  { label: "Triple", make: () => borderTriple() },
+  { label: "Dashed", make: () => borderDashed() },
+  { label: "Thick", make: () => borderThick() },
+  { label: "Stripes", make: () => borderStripes() },
+  { label: "Corners", make: () => borderCornerSquares() },
+  { label: "Brackets", make: () => borderCornerBrackets() },
+  { label: "Rounded", make: () => borderRounded() },
+  { label: "Left Bar", make: () => borderLeftAccent() },
+  { label: "Ornate", make: () => borderOrnate() },
+  { label: "Frame", make: () => defaultBorderFrame() },
+]
+
+
 export function defaultRibbonLabel(text = "WINNER"): [ShapeElement, TextElement] {
   const id = genId()
   return [

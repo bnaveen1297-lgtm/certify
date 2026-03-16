@@ -174,7 +174,14 @@ export function DashboardView({ onPublish, onLogout, tournamentHistory, onViewTo
     return () => clearTimeout(t)
   }, [draftLoaded, tournamentName, venue, startDate, endDate, isSingleDay, totalRounds, selectedDesign, customColors, selectedTemplateId, customWording, organizerLogo, sponsorLogos, signatories, step, participants])
 
-  // Clear draft and reset wizard to fresh state
+  // Custom templates — kept in sync with localStorage via window focus
+  const [customTemplatesCache, setCustomTemplatesCache] = useState<ReturnType<typeof loadTemplates>>([])
+  useEffect(() => {
+    setCustomTemplatesCache(loadTemplates())
+    const onFocus = () => setCustomTemplatesCache(loadTemplates())
+    window.addEventListener("focus", onFocus)
+    return () => window.removeEventListener("focus", onFocus)
+  }, [])
   const handleNewTournament = useCallback(() => {
     setTournamentName("")
     setVenue("")
@@ -619,6 +626,8 @@ export function DashboardView({ onPublish, onLogout, tournamentHistory, onViewTo
                         onCustomColorsChange={setCustomColors}
                         selectedCustomTemplateId={selectedCustomTemplateId}
                         onSelectCustomTemplate={setSelectedCustomTemplateId}
+                        previewParticipant={previewParticipant}
+                        previewEvent={eventData}
                       />
                     </div>
                     <div className="rounded-xl border border-border bg-card p-6">
@@ -650,7 +659,7 @@ export function DashboardView({ onPublish, onLogout, tournamentHistory, onViewTo
                         </h3>
                         <div className="overflow-hidden rounded border border-border">
                           {selectedCustomTemplateId ? (() => {
-                            const tpl = loadTemplates().find(t => t.id === selectedCustomTemplateId)
+                            const tpl = customTemplatesCache.find(t => t.id === selectedCustomTemplateId)
                             return tpl ? (
                               <CustomTemplateRenderer
                                 template={tpl}

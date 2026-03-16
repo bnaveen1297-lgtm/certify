@@ -2,10 +2,12 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { CERTIFICATE_DESIGNS } from "@/lib/certificate-designs"
-import { CertificateThumbnail } from "./certificate-renderer"
+import { CertificateThumbnail, CustomTemplateRenderer } from "./certificate-renderer"
 import { Label } from "@/components/ui/label"
-import { Palette, LayoutGrid, SlidersHorizontal, ExternalLink, Check } from "lucide-react"
+import { Palette, LayoutGrid, SlidersHorizontal, ExternalLink, Check, Plus } from "lucide-react"
 import { loadTemplates, CertificateTemplate } from "@/lib/template-editor"
+import type { Participant } from "@/lib/csv-fields"
+import type { EventData } from "@/lib/certificate-wording"
 
 interface DesignPickerProps {
   selectedDesign: number
@@ -14,6 +16,8 @@ interface DesignPickerProps {
   onCustomColorsChange?: (colors: Record<string, string>) => void
   selectedCustomTemplateId?: string | null
   onSelectCustomTemplate?: (id: string | null) => void
+  previewParticipant?: Participant
+  previewEvent?: EventData
 }
 
 const CATEGORY_FILTERS = [
@@ -25,11 +29,16 @@ const CATEGORY_FILTERS = [
   { value: "institutional", label: "Institutional" },
 ]
 
-export function DesignPicker({ selectedDesign, onSelect, customColors, onCustomColorsChange, selectedCustomTemplateId, onSelectCustomTemplate }: DesignPickerProps) {
+export function DesignPicker({ selectedDesign, onSelect, customColors, onCustomColorsChange, selectedCustomTemplateId, onSelectCustomTemplate, previewParticipant, previewEvent }: DesignPickerProps) {
   const [showColors, setShowColors] = useState(false)
   const [filter, setFilter] = useState("all")
   const [customTemplates, setCustomTemplates] = useState<CertificateTemplate[]>([])
   const currentDesign = CERTIFICATE_DESIGNS.find(d => d.id === selectedDesign) || CERTIFICATE_DESIGNS[0]
+
+  const defaultParticipant: Participant = { name: "Priya Sharma", title: "Ms.", position: "1", category: "Open", points: "8.5", gender: "Female", affiliation: "", rounds: "11" }
+  const defaultEvent: EventData = { tournamentName: "My Tournament", venue: "Chess Club", startDate: "2025-01-01", endDate: "2025-01-02", totalRounds: "9", isSingleDay: false }
+  const thumbParticipant = previewParticipant || defaultParticipant
+  const thumbEvent = previewEvent || defaultEvent
 
   useEffect(() => {
     setCustomTemplates(loadTemplates())
@@ -64,38 +73,61 @@ export function DesignPicker({ selectedDesign, onSelect, customColors, onCustomC
 
       {/* Custom templates from editor */}
       {customTemplates.length > 0 && (
-        <div className="rounded-lg border border-[#d4af37]/30 bg-[#d4af37]/5 p-3 space-y-2">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-[#d4af37] flex items-center gap-1.5">
-              <Palette className="h-3.5 w-3.5" />
-              My Custom Templates ({customTemplates.length})
+            <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Palette className="h-3.5 w-3.5 text-[#d4af37]" />
+              My Templates ({customTemplates.length})
             </p>
             <button
               onClick={() => window.open("/editor", "_blank", "noopener,noreferrer")}
-              className="text-[10px] text-[#d4af37]/70 hover:text-[#d4af37] flex items-center gap-1 transition-colors"
+              className="text-[10px] text-muted-foreground hover:text-[#d4af37] flex items-center gap-1 transition-colors"
             >
-              <ExternalLink className="h-3 w-3" /> Open Editor
+              <Plus className="h-3 w-3" /> New in Editor
             </button>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {customTemplates.map(t => (
-              <button
-                key={t.id}
-                onClick={() => onSelectCustomTemplate?.(selectedCustomTemplateId === t.id ? null : t.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  selectedCustomTemplateId === t.id
-                    ? "bg-[#d4af37] text-[#1a1a2e]"
-                    : "bg-white/50 border border-[#d4af37]/20 text-foreground hover:bg-[#d4af37]/10"
-                }`}
-              >
-                {selectedCustomTemplateId === t.id && <Check className="h-3 w-3" />}
-                {t.name}
-              </button>
-            ))}
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 pb-1">
+            {customTemplates.map(t => {
+              const isSelected = selectedCustomTemplateId === t.id
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => onSelectCustomTemplate?.(isSelected ? null : t.id)}
+                  className="flex flex-col items-center gap-1.5 group"
+                >
+                  <div style={{
+                    width: 130, height: 92,
+                    position: "relative", overflow: "hidden",
+                    borderRadius: 6,
+                    outline: isSelected ? `2.5px solid #d4af37` : `1.5px solid #d4af3730`,
+                    boxShadow: isSelected ? `0 0 0 3px #d4af3730` : "0 1px 4px rgba(0,0,0,0.10)",
+                    transition: "all 0.15s",
+                  }}>
+                    <div style={{ transform: `scale(${130/800})`, transformOrigin: "top left", width: 800, height: 566, pointerEvents: "none" }}>
+                      <CustomTemplateRenderer
+                        template={t}
+                        participant={thumbParticipant}
+                        event={thumbEvent}
+                        scale={1}
+                      />
+                    </div>
+                    {isSelected && (
+                      <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#d4af37] flex items-center justify-center">
+                        <Check className="h-2.5 w-2.5 text-[#1a1a2e]" />
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-center font-medium leading-tight text-muted-foreground group-hover:text-foreground transition-colors max-w-[130px] truncate">{t.name}</span>
+                </button>
+              )
+            })}
           </div>
           {selectedCustomTemplateId && (
-            <p className="text-[10px] text-[#d4af37]/70">Custom template selected — the live preview will use this layout.</p>
+            <p className="text-[10px] text-[#d4af37]/80 bg-[#d4af37]/5 px-2 py-1 rounded border border-[#d4af37]/20">
+              Custom template active — live preview and certificates will use this layout
+            </p>
           )}
+          <div className="border-t border-border my-1" />
         </div>
       )}
 
