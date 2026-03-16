@@ -60,15 +60,19 @@ export function EditorCanvas({
     startClientX: number
     startClientY: number
     origX: number; origY: number; origW: number; origH: number
+    moved: boolean  // true once pointer has moved >4px (distinguishes click from drag)
   }>({
     dragging: false, mode: null, id: null, handle: null,
     startClientX: 0, startClientY: 0,
     origX: 0, origY: 0, origW: 0, origH: 0,
+    moved: false,
   })
 
   // Always-fresh refs for callback and zoom
   const updateRef = useRef(onUpdateElement)
   useEffect(() => { updateRef.current = onUpdateElement }, [onUpdateElement])
+  const onSelectRef = useRef(onSelectElement)
+  useEffect(() => { onSelectRef.current = onSelectElement }, [onSelectElement])
   const zoomRef = useRef(zoom)
   useEffect(() => { zoomRef.current = zoom }, [zoom])
 
@@ -84,6 +88,13 @@ export function EditorCanvas({
       const z = zoomRef.current
       const dx = (e.clientX - s.startClientX) / z
       const dy = (e.clientY - s.startClientY) / z
+
+      // Only start visually moving once pointer has moved >4px (allows clicks to register)
+      if (!s.moved) {
+        if (Math.abs(dx) < 4 / z && Math.abs(dy) < 4 / z) return
+        s.moved = true
+        if (containerRef.current) containerRef.current.style.cursor = s.mode === "move" ? "grabbing" : CURSOR_MAP[s.handle!]
+      }
 
       if (s.mode === "move") {
         const nx = Math.max(0, Math.min(CANVAS_W - s.origW, s.origX + dx))
@@ -103,11 +114,16 @@ export function EditorCanvas({
       }
     }
 
-    function onUp() {
-      state.current.dragging = false
-      state.current.mode = null
-      state.current.id = null
-      // Reset cursor
+    function onUp(e: PointerEvent) {
+      const s = state.current
+      // If pointer never moved meaningfully, treat as a click → select element
+      if (s.dragging && s.id && !s.moved) {
+        onSelectRef.current?.(s.id)
+      }
+      s.dragging = false
+      s.mode = null
+      s.id = null
+      s.moved = false
       if (container) container.style.cursor = "default"
     }
 
@@ -124,27 +140,25 @@ export function EditorCanvas({
   const beginMove = useCallback((e: React.PointerEvent, el: TemplateElement) => {
     if (el.locked) return
     e.stopPropagation()
-    e.preventDefault()
-    // Use nativeEvent.pointerId — synthetic event may be pooled before setPointerCapture
+    // NOTE: do NOT call e.preventDefault() here — it blocks the click event
     containerRef.current?.setPointerCapture(e.nativeEvent.pointerId)
-    containerRef.current!.style.cursor = "grabbing"
-    onSelectElement(el.id)
     state.current = {
       dragging: true, mode: "move", id: el.id, handle: null,
       startClientX: e.clientX, startClientY: e.clientY,
       origX: el.x, origY: el.y, origW: el.width, origH: el.height,
+      moved: false,
     }
-  }, [onSelectElement])
+  }, [])
 
   const beginResize = useCallback((e: React.PointerEvent, el: TemplateElement, handle: Handle) => {
     e.stopPropagation()
     e.preventDefault()
     containerRef.current?.setPointerCapture(e.nativeEvent.pointerId)
-    containerRef.current!.style.cursor = CURSOR_MAP[handle]
     state.current = {
       dragging: true, mode: "resize", id: el.id, handle,
       startClientX: e.clientX, startClientY: e.clientY,
       origX: el.x, origY: el.y, origW: el.width, origH: el.height,
+      moved: false,
     }
   }, [])
 
@@ -194,7 +208,6 @@ export function EditorCanvas({
             wordBreak: "break-word",
           }}
           onPointerDown={e => beginMove(e, el)}
-          onClick={e => { e.stopPropagation(); onSelectElement(el.id) }}
         >
           {resolveToken(te.content)}
         </div>
@@ -205,7 +218,6 @@ export function EditorCanvas({
         <div
           style={{ ...base, display: "flex", alignItems: "center" }}
           onPointerDown={e => beginMove(e, el)}
-          onClick={e => { e.stopPropagation(); onSelectElement(el.id) }}
         >
           <div style={{ width: "100%", borderTop: `${de.strokeWidth}px ${de.style} ${de.stroke}` }} />
         </div>
@@ -216,7 +228,6 @@ export function EditorCanvas({
         <div
           style={{ ...base, backgroundColor: se.fill === "transparent" ? undefined : se.fill, border: `${se.strokeWidth}px solid ${se.stroke}`, borderRadius: se.borderRadius }}
           onPointerDown={e => beginMove(e, el)}
-          onClick={e => { e.stopPropagation(); onSelectElement(el.id) }}
         />
       )
     } else if (el.type === "ellipse") {
@@ -225,7 +236,6 @@ export function EditorCanvas({
         <div
           style={{ ...base, backgroundColor: se.fill === "transparent" ? undefined : se.fill, border: `${se.strokeWidth}px solid ${se.stroke}`, borderRadius: "50%" }}
           onPointerDown={e => beginMove(e, el)}
-          onClick={e => { e.stopPropagation(); onSelectElement(el.id) }}
         />
       )
     } else if (el.type === "logo_organizer" || el.type === "logo_sponsor") {
@@ -234,7 +244,6 @@ export function EditorCanvas({
         <div
           style={{ ...base, display: "flex", alignItems: "center", justifyContent: "center" }}
           onPointerDown={e => beginMove(e, el)}
-          onClick={e => { e.stopPropagation(); onSelectElement(el.id) }}
         >
           {le.src
             ? <img src={le.src} alt={le.label} style={{ width: "100%", height: "100%", objectFit: le.objectFit, pointerEvents: "none", display: "block" }} crossOrigin="anonymous" />
@@ -253,7 +262,6 @@ export function EditorCanvas({
         <div
           style={{ ...base, overflow: "hidden", borderRadius: ie.borderRadius }}
           onPointerDown={e => beginMove(e, el)}
-          onClick={e => { e.stopPropagation(); onSelectElement(el.id) }}
         >
           <img src={ie.src} alt="" style={{ width: "100%", height: "100%", objectFit: ie.objectFit, pointerEvents: "none", display: "block" }} crossOrigin="anonymous" />
         </div>

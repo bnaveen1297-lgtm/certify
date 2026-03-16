@@ -209,8 +209,15 @@ export function ElementsPanel({
 }
 `
 
-const filePath = path.resolve(__dirname, '../components/editor/elements-panel.tsx')
-fs.writeFileSync(filePath, content, 'utf8')
+const { execSync } = require('child_process')
+const found = execSync("find /home /app /project /workspace /srv -name 'elements-panel.tsx' 2>/dev/null | head -5").toString().trim()
+console.log('Found files:', found)
+const cwd = process.cwd()
+console.log('cwd:', cwd)
+// Also list /home/user
+try { console.log('/home/user:', fs.readdirSync('/home/user').join(', ')) } catch(e) { console.log('/home/user error:', e.message) }
+try { console.log('/home:', fs.readdirSync('/home').join(', ')) } catch(e) { console.log('/home error:', e.message) }
+try { console.log('/app:', fs.readdirSync('/app').join(', ')) } catch(e) { console.log('/app error:', e.message) }
 const written = fs.readFileSync(filePath, 'utf8')
 const lines = written.split('\n').length
 console.log('Written lines:', lines)

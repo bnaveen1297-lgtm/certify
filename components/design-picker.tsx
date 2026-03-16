@@ -41,11 +41,17 @@ export function DesignPicker({ selectedDesign, onSelect, customColors, onCustomC
   const thumbEvent = previewEvent || defaultEvent
 
   useEffect(() => {
-    setCustomTemplates(loadTemplates())
-    // Refresh on focus (user may have just saved in editor)
-    const onFocus = () => setCustomTemplates(loadTemplates())
-    window.addEventListener("focus", onFocus)
-    return () => window.removeEventListener("focus", onFocus)
+    const refresh = () => setCustomTemplates(loadTemplates())
+    refresh()
+    // fires when user returns to this tab from same-tab navigation
+    window.addEventListener("focus", refresh)
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh() })
+    // fires when another tab (editor) saves to localStorage
+    window.addEventListener("storage", (e) => { if (e.key === "certify-templates-updated" || e.key === "certify-templates") refresh() })
+    return () => {
+      window.removeEventListener("focus", refresh)
+      window.removeEventListener("storage", refresh as any)
+    }
   }, [])
 
   const filteredDesigns = useMemo(() => {

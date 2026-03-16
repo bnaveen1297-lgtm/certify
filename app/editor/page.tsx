@@ -122,9 +122,10 @@ export default function EditorPage() {
     if (!template) return
     upsertTemplate(template)
     setAllTemplates(loadTemplates())
+    // Write a marker key so storage event fires on other tabs;
+    // visibilitychange listener in DesignPicker handles same-tab navigation
+    try { localStorage.setItem("certify-templates-updated", String(Date.now())) } catch { /* noop */ }
     setIsSaved(true)
-    // Notify opener/parent tab that templates changed so dashboard can refresh
-    try { window.opener?.dispatchEvent(new Event("focus")) } catch { /* noop */ }
     setTimeout(() => setIsSaved(false), 2500)
   }, [template])
 
