@@ -121,11 +121,8 @@ export default function EditorPage() {
   // ── Save
   const save = useCallback(() => {
     if (!template) return
-    console.log("[v0] Saving template:", template.id, template.name)
     upsertTemplate(template)
-    const after = loadTemplates()
-    console.log("[v0] After save, loadTemplates():", after.length, "templates")
-    setAllTemplates(after)
+    setAllTemplates(loadTemplates())
     // Write a marker key so storage event fires on other tabs
     try { localStorage.setItem("certify-templates-updated", String(Date.now())) } catch { /* noop */ }
     setIsSaved(true)
