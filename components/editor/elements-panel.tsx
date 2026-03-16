@@ -41,8 +41,8 @@ const ADD_ITEMS: { label: string; icon: React.ReactNode; make: () => TemplateEle
   { label: "Ribbon", icon: <span className="text-[9px] font-bold">RBN</span>, make: () => defaultRibbonLabel() },
   { label: "Star", icon: <Star size={12} />, make: () => defaultStar() },
   { label: "Trophy", icon: <Trophy size={12} />, make: () => defaultTrophy() },
-  { label: "Medal", icon: <span className="text-[11px]">&#x1F947;</span>, make: () => defaultMedal() },
-  { label: "Sparkle", icon: <span className="text-[11px]">&#x1F31F;</span>, make: () => defaultStarBurst() },
+  { label: "Medal", icon: <span className="text-[11px]">M</span>, make: () => defaultMedal() },
+  { label: "Sparkle", icon: <span className="text-[11px]">*</span>, make: () => defaultStarBurst() },
 ]
 
 function elIcon(type: string) {
@@ -62,7 +62,7 @@ function elLabel(el: TemplateElement): string {
   if (el.type === "text" || el.type === "heading") {
     const content = (el as any).content as string
     const clean = content.replace(/[{}]/g, "")
-    return clean.length > 24 ? clean.slice(0, 24) + "\u2026" : clean
+    return clean.length > 24 ? clean.slice(0, 24) + "..." : clean
   }
   const map: Record<string, string> = {
     divider: "Divider",
@@ -93,8 +93,10 @@ export function ElementsPanel({
   function handleDragEnd() {
     const from = dragItem.current
     const to = dragOver.current
-    setDragIdx(null); setOverIdx(null)
-    dragItem.current = null; dragOver.current = null
+    setDragIdx(null)
+    setOverIdx(null)
+    dragItem.current = null
+    dragOver.current = null
     if (from === null || to === null || from === to) return
     const reordered = [...sorted]
     const [moved] = reordered.splice(from, 1)
@@ -106,6 +108,7 @@ export function ElementsPanel({
 
   return (
     <div className="flex flex-col">
+
       {/* Add elements grid */}
       <div className="p-3 border-b border-white/10">
         <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest mb-2.5">Elements</p>
@@ -192,7 +195,9 @@ export function ElementsPanel({
                 onClick={() => onSelectElement(el.id)}
                 className={[
                   "group flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer select-none transition-all",
-                  isSelected ? "bg-[#3b82f6]/15 border border-[#3b82f6]/40" : "hover:bg-white/5 border border-transparent",
+                  isSelected
+                    ? "bg-[#3b82f6]/15 border border-[#3b82f6]/40"
+                    : "hover:bg-white/5 border border-transparent",
                   isDragging ? "opacity-40" : "opacity-100",
                   isOver ? "border-t-2 border-t-[#3b82f6]" : "",
                 ].join(" ")}
@@ -200,7 +205,9 @@ export function ElementsPanel({
                 <span className="text-white/20 hover:text-white/50 cursor-grab active:cursor-grabbing shrink-0">
                   <GripVertical size={12} />
                 </span>
-                <span className="shrink-0 w-3.5 flex items-center justify-center">{elIcon(el.type)}</span>
+                <span className="shrink-0 w-3.5 flex items-center justify-center">
+                  {elIcon(el.type)}
+                </span>
                 <span className={`flex-1 text-[11px] truncate ${el.visible ? "text-white/70" : "text-white/25 line-through"}`}>
                   {elLabel(el)}
                 </span>
@@ -239,6 +246,7 @@ export function ElementsPanel({
           })}
         </div>
       </div>
+
     </div>
   )
 }
