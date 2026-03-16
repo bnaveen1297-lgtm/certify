@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import {
   CertificateTemplate, TemplateElement, blankTemplate, loadTemplates,
@@ -20,6 +20,18 @@ import {
 } from "lucide-react"
 
 export default function EditorPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-[#1a1a2e]">
+        <div className="text-white/50 text-sm">Loading editor...</div>
+      </div>
+    }>
+      <EditorContent />
+    </Suspense>
+  )
+}
+
+function EditorContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -36,7 +48,6 @@ export default function EditorPage() {
   // Refresh templates when switching to templates panel
   const switchToTemplatesPanel = useCallback(() => {
     const templates = loadTemplates()
-    console.log("[v0] Switching to templates panel - count:", templates.length, templates.map(t => t.name))
     setAllTemplates(templates)
     setLeftPanel("templates")
   }, [])
@@ -46,7 +57,6 @@ export default function EditorPage() {
   useEffect(() => {
     const id = searchParams?.get("id")
     const templates = loadTemplates()
-    console.log("[v0] Initial load - templates count:", templates.length, templates.map(t => t.name))
     setAllTemplates(templates)
     if (id) {
       const found = templates.find(t => t.id === id)
@@ -130,10 +140,8 @@ export default function EditorPage() {
   // ── Save
   const save = useCallback(() => {
     if (!template) return
-    console.log("[v0] Saving template:", template.id, template.name)
     upsertTemplate(template)
     const updatedTemplates = loadTemplates()
-    console.log("[v0] Loaded templates after save:", updatedTemplates.length, updatedTemplates.map(t => t.name))
     setAllTemplates(updatedTemplates)
     // Write a marker key so storage event fires on other tabs
     try { localStorage.setItem("certify-templates-updated", String(Date.now())) } catch { /* noop */ }
