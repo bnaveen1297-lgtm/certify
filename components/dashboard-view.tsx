@@ -71,6 +71,7 @@ export function DashboardView({ onPublish, onLogout, tournamentHistory, onViewTo
   const [customWording, setCustomWording] = useState(WORDING_TEMPLATES[0].text)
   const [organizerLogo, setOrganizerLogo] = useState<string | null>(null)
   const [sponsorLogos, setSponsorLogos] = useState<string[]>([])
+  const [selectedCustomTemplateId, setSelectedCustomTemplateId] = useState<string | null>(null)
   const [signatories, setSignatories] = useState<Signatory[]>([
     { name: "", designation: "President" },
     { name: "", designation: "Chief Arbiter" },
@@ -187,6 +188,7 @@ export function DashboardView({ onPublish, onLogout, tournamentHistory, onViewTo
     setCustomWording(WORDING_TEMPLATES[0].text)
     setOrganizerLogo(null)
     setSponsorLogos([])
+    setSelectedCustomTemplateId(null)
     setSignatories([
       { name: "", designation: "President" },
       { name: "", designation: "Chief Arbiter" },
@@ -589,8 +591,34 @@ export function DashboardView({ onPublish, onLogout, tournamentHistory, onViewTo
               {step === 3 && (
                 <div className="flex flex-col xl:flex-row gap-6">
                   <div className="flex-1 space-y-6 min-w-0">
+                    {/* Template Editor CTA */}
+                    <div className="rounded-xl border border-[#d4af37]/30 bg-[#d4af37]/5 p-4 flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#d4af37]/15 shrink-0">
+                        <Palette className="h-5 w-5 text-[#d4af37]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Design from scratch in the Template Editor</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Drag and drop elements, set fonts, colors, and logos. Save as a named template to reuse anytime.</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open("/editor", "_blank", "noopener,noreferrer")}
+                        className="shrink-0 gap-1.5 border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/10"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Open Editor
+                      </Button>
+                    </div>
                     <div className="rounded-xl border border-border bg-card p-6">
-                      <DesignPicker selectedDesign={selectedDesign} onSelect={setSelectedDesign} customColors={customColors} onCustomColorsChange={setCustomColors} />
+                      <DesignPicker
+                        selectedDesign={selectedDesign}
+                        onSelect={setSelectedDesign}
+                        customColors={customColors}
+                        onCustomColorsChange={setCustomColors}
+                        selectedCustomTemplateId={selectedCustomTemplateId}
+                        onSelectCustomTemplate={setSelectedCustomTemplateId}
+                      />
                     </div>
                     <div className="rounded-xl border border-border bg-card p-6">
                       <WordingEditor

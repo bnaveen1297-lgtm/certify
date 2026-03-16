@@ -1,16 +1,19 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { CERTIFICATE_DESIGNS } from "@/lib/certificate-designs"
 import { CertificateThumbnail } from "./certificate-renderer"
 import { Label } from "@/components/ui/label"
-import { Palette, LayoutGrid, SlidersHorizontal } from "lucide-react"
+import { Palette, LayoutGrid, SlidersHorizontal, ExternalLink, Check } from "lucide-react"
+import { loadTemplates, CertificateTemplate } from "@/lib/template-editor"
 
 interface DesignPickerProps {
   selectedDesign: number
   onSelect: (id: number) => void
   customColors?: Record<string, string>
   onCustomColorsChange?: (colors: Record<string, string>) => void
+  selectedCustomTemplateId?: string | null
+  onSelectCustomTemplate?: (id: string | null) => void
 }
 
 const CATEGORY_FILTERS = [
@@ -22,10 +25,19 @@ const CATEGORY_FILTERS = [
   { value: "institutional", label: "Institutional" },
 ]
 
-export function DesignPicker({ selectedDesign, onSelect, customColors, onCustomColorsChange }: DesignPickerProps) {
+export function DesignPicker({ selectedDesign, onSelect, customColors, onCustomColorsChange, selectedCustomTemplateId, onSelectCustomTemplate }: DesignPickerProps) {
   const [showColors, setShowColors] = useState(false)
   const [filter, setFilter] = useState("all")
+  const [customTemplates, setCustomTemplates] = useState<CertificateTemplate[]>([])
   const currentDesign = CERTIFICATE_DESIGNS.find(d => d.id === selectedDesign) || CERTIFICATE_DESIGNS[0]
+
+  useEffect(() => {
+    setCustomTemplates(loadTemplates())
+    // Refresh on focus (user may have just saved in editor)
+    const onFocus = () => setCustomTemplates(loadTemplates())
+    window.addEventListener("focus", onFocus)
+    return () => window.removeEventListener("focus", onFocus)
+  }, [])
 
   const filteredDesigns = useMemo(() => {
     if (filter === "all") return CERTIFICATE_DESIGNS
@@ -49,6 +61,43 @@ export function DesignPicker({ selectedDesign, onSelect, customColors, onCustomC
         </h3>
         <span className="text-xs text-muted-foreground">{filteredDesigns.length} designs</span>
       </div>
+
+      {/* Custom templates from editor */}
+      {customTemplates.length > 0 && (
+        <div className="rounded-lg border border-[#d4af37]/30 bg-[#d4af37]/5 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-[#d4af37] flex items-center gap-1.5">
+              <Palette className="h-3.5 w-3.5" />
+              My Custom Templates ({customTemplates.length})
+            </p>
+            <button
+              onClick={() => window.open("/editor", "_blank", "noopener,noreferrer")}
+              className="text-[10px] text-[#d4af37]/70 hover:text-[#d4af37] flex items-center gap-1 transition-colors"
+            >
+              <ExternalLink className="h-3 w-3" /> Open Editor
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {customTemplates.map(t => (
+              <button
+                key={t.id}
+                onClick={() => onSelectCustomTemplate?.(selectedCustomTemplateId === t.id ? null : t.id)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  selectedCustomTemplateId === t.id
+                    ? "bg-[#d4af37] text-[#1a1a2e]"
+                    : "bg-white/50 border border-[#d4af37]/20 text-foreground hover:bg-[#d4af37]/10"
+                }`}
+              >
+                {selectedCustomTemplateId === t.id && <Check className="h-3 w-3" />}
+                {t.name}
+              </button>
+            ))}
+          </div>
+          {selectedCustomTemplateId && (
+            <p className="text-[10px] text-[#d4af37]/70">Custom template selected — the live preview will use this layout.</p>
+          )}
+        </div>
+      )}
 
       {/* Category filter chips */}
       <div className="flex flex-wrap gap-1.5">
