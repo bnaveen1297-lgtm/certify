@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorCanvas } from "@/components/editor/editor-canvas"
-import { ElementsPanel } from "@/components/editor/layer-panel"
+import { ElementsPanel } from "@/components/editor/elements-panel"
 import { PropertiesPanel } from "@/components/editor/properties-panel"
 import {
   ChevronLeft, Save, Download, RotateCcw, RotateCw,
