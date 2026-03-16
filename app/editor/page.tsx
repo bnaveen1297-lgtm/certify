@@ -16,7 +16,7 @@ import { ElementsPanel } from "@/components/editor/layer-panel"
 import { PropertiesPanel } from "@/components/editor/properties-panel"
 import {
   ChevronLeft, Save, Download, RotateCcw, RotateCw,
-  Trash2, Eye, EyeOff, Copy, Plus, Layers, Settings2, Check,
+  Trash2, Eye, EyeOff, Copy, Plus, Layers, Settings2, Check, FileText,
 } from "lucide-react"
 
 export default function EditorPage() {
@@ -122,12 +122,24 @@ export default function EditorPage() {
   const save = useCallback(() => {
     if (!template) return
     upsertTemplate(template)
-    setAllTemplates(loadTemplates())
+    const updatedTemplates = loadTemplates()
+    setAllTemplates(updatedTemplates)
     // Write a marker key so storage event fires on other tabs
     try { localStorage.setItem("certify-templates-updated", String(Date.now())) } catch { /* noop */ }
     setIsSaved(true)
     setTimeout(() => setIsSaved(false), 2500)
   }, [template])
+
+  // Listen for storage changes from other tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "certify_custom_templates" || e.key === "certify-templates-updated") {
+        setAllTemplates(loadTemplates())
+      }
+    }
+    window.addEventListener("storage", handleStorageChange)
+    return () => window.removeEventListener("storage", handleStorageChange)
+  }, [])
 
   // Keyboard shortcuts — attached to window so they fire regardless of focus target
   useEffect(() => {
@@ -311,11 +323,14 @@ export default function EditorPage() {
               />
             ) : (
               <div className="p-4 space-y-3">
-                <p className="text-xs text-white/40 font-semibold uppercase tracking-widest">Saved Templates</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-white/40 font-semibold uppercase tracking-widest">Saved Templates</p>
+                  <span className="text-xs text-white/30 bg-white/5 px-2 py-0.5 rounded">{allTemplates.length}</span>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full gap-1.5 border-white/10 text-white/60 hover:text-white hover:bg-white/10 hover:border-white/20"
+                  className="w-full gap-1.5 border-[#d4af37]/30 text-[#d4af37]/80 hover:text-[#d4af37] hover:bg-[#d4af37]/10 hover:border-[#d4af37]/50"
                   onClick={() => {
                     const t = blankTemplate()
                     setTemplate(t)
@@ -327,29 +342,62 @@ export default function EditorPage() {
                   <Plus className="h-3.5 w-3.5" /> New Blank Template
                 </Button>
                 {allTemplates.length === 0 ? (
-                  <p className="text-xs text-white/30 text-center py-8">No saved templates yet.<br />Save this one to get started.</p>
-                ) : (
-                  allTemplates.map(t => (
-                    <div key={t.id} className={`group relative rounded-lg border p-3 cursor-pointer transition-colors ${
-                      template.id === t.id ? "border-[#d4af37]/60 bg-[#d4af37]/5" : "border-white/10 hover:border-white/20 hover:bg-white/5"
-                    }`}>
-                      <button className="w-full text-left" onClick={() => {
-                        setTemplate(t)
-                        setSelectedId(null)
-                        setUndoStack([])
-                        setRedoStack([])
-                      }}>
-                        <p className="text-sm font-semibold text-white/80 truncate">{t.name}</p>
-                        <p className="text-xs text-white/30 mt-0.5">{t.elements.length} elements · {new Date(t.updatedAt).toLocaleDateString()}</p>
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteTemplate(t.id); setAllTemplates(loadTemplates()) }}
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-white/30 hover:text-red-400 transition-all"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                  <div className="text-center py-8 px-4">
+                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3">
+                      <Layers className="h-5 w-5 text-white/20" />
                     </div>
-                  ))
+                    <p className="text-xs text-white/40 mb-1">No saved templates yet</p>
+                    <p className="text-[10px] text-white/25">Save this template to get started</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {allTemplates.map(t => (
+                      <div key={t.id} className={`group relative rounded-lg border p-3 cursor-pointer transition-all ${
+                        template.id === t.id 
+                          ? "border-[#d4af37]/60 bg-[#d4af37]/10 ring-1 ring-[#d4af37]/20" 
+                          : "border-white/10 hover:border-white/20 hover:bg-white/5"
+                      }`}>
+                        <button className="w-full text-left" onClick={() => {
+                          setTemplate(t)
+                          setSelectedId(null)
+                          setUndoStack([])
+                          setRedoStack([])
+                        }}>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${template.id === t.id ? "bg-[#d4af37]" : "bg-white/20"}`} />
+                            <p className="text-sm font-semibold text-white/80 truncate flex-1">{t.name}</p>
+                          </div>
+                          <p className="text-xs text-white/30 mt-1 ml-4">
+                            {t.elements.length} elements
+                            <span className="mx-1.5">·</span>
+                            {new Date(t.updatedAt).toLocaleDateString()}
+                          </p>
+                        </button>
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              // Duplicate template
+                              const dup = { ...t, id: genId(), name: `${t.name} (Copy)`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+                              upsertTemplate(dup)
+                              setAllTemplates(loadTemplates())
+                            }}
+                            className="p-1 text-white/30 hover:text-white/60 hover:bg-white/10 rounded transition-colors"
+                            title="Duplicate"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteTemplate(t.id); setAllTemplates(loadTemplates()) }}
+                            className="p-1 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}

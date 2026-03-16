@@ -3,7 +3,7 @@
 import { useRef } from "react"
 import {
   CertificateTemplate, TemplateElement, CanvasBackground,
-  TextElement, ShapeElement, DividerElement, LogoElement,
+  TextElement, ShapeElement, DividerElement, LogoElement, ImageElement,
   FONT_FAMILIES,
 } from "@/lib/template-editor"
 import { Trash2, Copy, AlignLeft, AlignCenter, AlignRight } from "lucide-react"
@@ -374,6 +374,64 @@ export function PropertiesPanel({
               <option value="contain">Contain</option>
               <option value="cover">Cover</option>
             </select>
+          </Row>
+        </Section>
+        {posSection}
+        <ActionsSection onDelete={onDeleteElement} onDuplicate={onDuplicateElement} />
+      </div>
+    )
+  }
+
+  // ── Image element
+  if (el.type === "image") {
+    const ie = el as ImageElement
+    return (
+      <div>
+        <Section title="Image">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={e => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              const reader = new FileReader()
+              reader.onload = ev => onUpdateElement({ src: ev.target?.result as string } as any)
+              reader.readAsDataURL(file)
+            }}
+          />
+          {ie.src && (
+            <div className="mb-2 rounded overflow-hidden border border-white/10">
+              <img src={ie.src} alt="" className="w-full h-24 object-contain bg-white/5" />
+            </div>
+          )}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full h-9 rounded border border-dashed border-white/20 text-xs text-white/40 hover:border-white/40 hover:text-white/60 transition-colors"
+          >
+            {ie.src ? "Replace Image" : "Upload Image"}
+          </button>
+          {ie.src && (
+            <button
+              onClick={() => onUpdateElement({ src: "" } as any)}
+              className="w-full mt-1 text-[10px] text-red-400/60 hover:text-red-400 transition-colors"
+            >
+              Remove image
+            </button>
+          )}
+          <Row label="Fit">
+            <select
+              value={ie.objectFit}
+              onChange={e => onUpdateElement({ objectFit: e.target.value as any } as any)}
+              className="w-full h-7 rounded px-2 text-xs bg-white/5 border border-white/10 text-white/80 focus:outline-none"
+            >
+              <option value="contain">Contain</option>
+              <option value="cover">Cover</option>
+            </select>
+          </Row>
+          <Row label="Radius">
+            <NumInput value={ie.borderRadius} onChange={v => onUpdateElement({ borderRadius: v } as any)} min={0} max={200} unit="px" />
           </Row>
         </Section>
         {posSection}
