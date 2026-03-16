@@ -1,4 +1,5 @@
 "use client"
+// certificate-renderer v2
 
 import type { Participant } from "@/lib/csv-fields"
 import type { EventData, Signatory } from "@/lib/certificate-wording"
